@@ -330,6 +330,9 @@ class Manager(ctk.CTkToplevel):
         
         try:
             icon_path = self.currentPath
+            if not icon_path:
+                CTkMessagebox(title="Erro", message="Por favor, selecione um ícone para o executável.", icon="cancel")
+                return
         except AttributeError:
             CTkMessagebox(title="Erro", message="Por favor, selecione um ícone para o executável.", icon="cancel")
             return
