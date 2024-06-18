@@ -412,8 +412,10 @@ class EditLogin(ctk.CTkToplevel):
         self.login = login
         self.password = password
         self.nickname = nickname
-        self.icon_path = icon_path
+        self.currentPath = icon_path
         self.row_index = row_index
+
+        print(icon_path)
 
         self.__windowcfg()
         self.__frameAddAccount()
@@ -470,7 +472,7 @@ class EditLogin(ctk.CTkToplevel):
         icon_label = ctk.CTkLabel(frame, text="Ícone:")
         icon_label.grid(row=3, column=0, padx=10, pady=10)
 
-        image = ctk.CTkImage(Image.open(self.icon_path), size=(32, 32))
+        image = ctk.CTkImage(Image.open(f"{self.currentPath}"), size=(32, 32))
         self.icon_path_label = ctk.CTkLabel(frame, image=image,text="")
         self.icon_path_label.grid(row=3, column=1, padx=10, pady=10)
 
@@ -491,7 +493,6 @@ class EditLogin(ctk.CTkToplevel):
         self.password_visible = not self.password_visible
 
     def select_icon(self):
-        self.currentPath = None
         icon_path = filedialog.askopenfilename(initialdir= './icons', filetypes=[("Selecione o ícone", "*.ico")])
         if icon_path:
             image = ctk.CTkImage(Image.open(icon_path), size=(32, 32))
@@ -538,8 +539,6 @@ class EditLogin(ctk.CTkToplevel):
             messagebox.showerror("Erro", "Erro ao salvar dados no arquivo JSON.")
             return
 
-        CTkMessagebox(title='Conta editada',message=f"Conta editada !!",
-                  icon="check", option_1="Ok")
 
         self.master.updateTableEdit(self.row_index,login,nickname)
 

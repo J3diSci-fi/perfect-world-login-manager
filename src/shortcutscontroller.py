@@ -44,10 +44,9 @@ def criar_atalho(login,senha,nickname,icon_path):
 
     return caminho_atalho
 
-def editar_atalho(nome_atalho, login,senha,nickname,icon):
-    print(nome_atalho)
+def editar_atalho(nome_atalho, login,senha,nickname,icon_path):
     excluir_atalho(nome_atalho)
-    criar_atalho(login,senha,nickname,icon)
+    criar_atalho(login,senha,nickname,icon_path)
 
 def excluir_atalho(nome_atalho):
 
