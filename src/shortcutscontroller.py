@@ -45,37 +45,9 @@ def criar_atalho(login,senha,nickname,icon_path):
     return caminho_atalho
 
 def editar_atalho(nome_atalho, login,senha,nickname,icon):
-    novos_argumentos = [
-        f"startbypatcher",
-        f"user:{login}",
-        f"pwd:{senha}",
-        f"role:{nickname}",
-    ]
-
-    caminho_atalho = f"{__shortcut_path}\\{nome_atalho}.lnk"
-
-    print(caminho_atalho)
-    
-    if not os.path.exists(caminho_atalho):
-        print(f"Atalho '{nome_atalho}' não encontrado em {caminho_atalho}")
-        return
-    
-    shell = win32com.client.Dispatch("WScript.Shell")
-    atalho = shell.CreateShortCut(caminho_atalho)
-
-    # Edita os argumentos do atalho
-    atalho.Arguments = " ".join(novos_argumentos)
-    
-    # Edita o ícone do atalho
-    atalho.IconLocation = icon
-
-    # Salva as alterações
-    atalho.save()
-    
-    novo_caminho_atalho = os.path.join(__shortcut_path, f"{login}.lnk")
-    os.rename(caminho_atalho, novo_caminho_atalho)
-    
-    print(f"Atalho '{nome_atalho}' editado com sucesso!")
+    print(nome_atalho)
+    excluir_atalho(nome_atalho)
+    criar_atalho(login,senha,nickname,icon)
 
 def excluir_atalho(nome_atalho):
 

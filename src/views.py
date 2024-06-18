@@ -543,6 +543,6 @@ class EditLogin(ctk.CTkToplevel):
 
         self.master.updateTableEdit(self.row_index,login,nickname)
 
-        editar_atalho(self.nickname,login,password,nickname,icon_path)
+        editar_atalho(self.login,login,password,nickname,icon_path)
 
         self.destroy()
