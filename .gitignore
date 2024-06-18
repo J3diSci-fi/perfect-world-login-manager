@@ -1,9 +1,15 @@
+env/
+
 # Ignorar a pasta shortcuts
 shortcuts/
 
 # Ignorar os arquivo
 data.json
 executable_path.json
+main.cmd
+main.exe
 
 # Ignorar a pasta __pycache__ dentro de src
 src/__pycache__/
+
+main.build/

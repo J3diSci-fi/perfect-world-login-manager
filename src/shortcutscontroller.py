@@ -1,10 +1,12 @@
 import win32com.client
 import json
 import os
+from unidecode import unidecode
 
 __shortcut_path = os.getcwd()+r"\shortcuts"
 
 def criar_atalho(login,senha,nickname,icon_path):
+
     # Verifica se a pasta shortcuts existe, se não, cria-a
     if not os.path.exists(__shortcut_path):
         os.makedirs(__shortcut_path) 
@@ -23,6 +25,9 @@ def criar_atalho(login,senha,nickname,icon_path):
     ]
 
     shell = win32com.client.Dispatch("WScript.Shell")
+
+    #Tratamento outros caracteres fora da ASCII
+    nickname = unidecode(nickname)
     
     atalho = shell.CreateShortCut(os.path.join(__shortcut_path, f"{nickname}.lnk"))
     atalho.TargetPath = caminho_element_executavel
@@ -34,7 +39,7 @@ def criar_atalho(login,senha,nickname,icon_path):
         atalho.WorkingDirectory = caminho_element
     
     if icon_path:
-        atalho.IconLocation = icon_path
+        atalho.IconLocation = f'{icon_path}'
 
     atalho.save()
 
@@ -111,3 +116,5 @@ def excluir_todos_atalhos():
     else:
         print("Nenhum atalho encontrado para excluir.")
         return False
+    
+criar_atalho("teste","teste","бабаяга",r"C:\Users\JONAS\Documents\perfect-world-login-manager\icons\Versao-1_15.ico")
