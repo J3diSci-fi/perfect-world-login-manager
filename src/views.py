@@ -260,7 +260,7 @@ class Manager(ctk.CTkToplevel):
                         icon="info", option_1="Abrir", option_2="Editar",option_3='Excluir')
 
             if msg.get() == 'Abrir':
-                exec_element(row_current_data[1])
+                exec_element(row_current_data[0])
 
             elif msg.get() == 'Excluir':  # Opção "Excluir" selecionada
                 # Encontrar e remover a conta correspondente no JSON
@@ -280,7 +280,7 @@ class Manager(ctk.CTkToplevel):
                 # Atualizar a tabela
                 self.table.delete_row(currentRow)
 
-                excluir_atalho(row_current_data[1])
+                excluir_atalho(row_current_data[0])
                 
             elif msg.get() == "Editar":
                 row_index = ''
