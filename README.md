@@ -2,6 +2,12 @@
 
 Este projeto fornece uma ferramenta de auto login para o jogo Perfect World. Ele foi projetado para funcionar com qualquer versão de Perfect World.
 
+## Sistema Operacional
+
+- WINDOWS 10/11  ✅
+- LINUX  ❌
+- MAC OS  ❌
+
 ## Funcionalidades
 
 - Criação de atalhos personalizados para login automático.
