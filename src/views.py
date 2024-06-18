@@ -62,7 +62,7 @@ class Root(ctk.CTk):
                 self.entry.insert(0, file_path)
                 self.entry.configure(state="readonly")
             else:
-                CTkMessagebox(title="Erro", message="Selecione um executável:\n-->elementclient.exe\n-->ELEMENTCLIENT.EXE\n-->elementclient_64.exe", icon="Ok")
+                CTkMessagebox(title="Info", message="Selecione um executável:\n-->elementclient.exe\n-->ELEMENTCLIENT.EXE\n-->elementclient_64.exe")
 
     def confirm(self):
         exe_path = self.entry.get()
@@ -502,20 +502,20 @@ class EditLogin(ctk.CTkToplevel):
         login = self.login_entry.get()
         password = self.password_entry.get()
         nickname = self.nickname_entry.get()
+        if not login:
+            CTkMessagebox(title="Login", message="Por favor, preencha o campo de Login!!!", icon="cancel")
+            return        
+        if not password:
+            CTkMessagebox(title="Password", message="Por favor, preencha o campo de Password!!!", icon="cancel")
+            return
+        if not nickname:
+            CTkMessagebox(title="Nickname", message="Por favor, preencha o campo de Nickname!!!", icon="cancel")
+            return       
         try:
             icon_path = self.currentPath
         except AttributeError:
-            CTkMessagebox(title="Ícone", message="Por favor, selecione um ícone.\nMesmo que já esteja inicialemnte mostrando!!!", icon="Ok")
+            CTkMessagebox(title="Ícone", message="Por favor, selecione um ícone.\nMesmo que já esteja inicialemnte mostrando!!!", icon="cancel")
             return
-        if not login:
-            CTkMessagebox(title="Login", message="Por favor, preencha o campo de Login!!!", icon="Ok")
-            return        
-        if not password:
-            CTkMessagebox(title="Password", message="Por favor, preencha o campo de Password!!!", icon="Ok")
-            return
-        if not nickname:
-            CTkMessagebox(title="Nickname", message="Por favor, preencha o campo de Nickname!!!", icon="Ok")
-            return       
 
         try:
             with open('data.json', 'r') as f:

@@ -1,10 +1,7 @@
-# Ignorar a pasta env
-env/
-
 # Ignorar a pasta shortcuts
 shortcuts/
 
-# Ignorar os arquivos data.json e executable_path.json
+# Ignorar os arquivo
 data.json
 executable_path.json
 
