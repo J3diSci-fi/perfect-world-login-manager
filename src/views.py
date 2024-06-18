@@ -127,7 +127,7 @@ class Manager(ctk.CTkToplevel):
 
     def __elements(self):
         menu = CTkMenuBar(master=self)
-        menu.add_cascade("Combo")
+        menu.add_cascade("Combo",command=self.__comboWindow)
         menu.add_cascade("Mudar Caminho Executável",command=self.change_executable_path)
         menu.add_cascade("Resetar App",command=self.reset_app)
 
@@ -403,7 +403,7 @@ class Manager(ctk.CTkToplevel):
         
     def __comboWindow(self):
 
-        CTkMessagebox(title="Error", message="Something went wrong!!!", icon="cancel")
+        CTkMessagebox(title="EM CONSTRUÇÃO!!", message="EM CONSTRUÇÃO!!", icon="cancel")
 
 class EditLogin(ctk.CTkToplevel):
     def __init__(self, master, login='None',password='None',nickname='None',icon_path='None',row_index=0):
