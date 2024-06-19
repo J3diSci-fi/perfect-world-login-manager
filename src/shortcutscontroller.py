@@ -49,7 +49,6 @@ def editar_atalho(nome_atalho, login,senha,nickname,icon_path):
     criar_atalho(login,senha,nickname,icon_path)
 
 def excluir_atalho(nome_atalho):
-
     
     caminho_atalho = os.path.join(__shortcut_path, f"{nome_atalho}.lnk")
 

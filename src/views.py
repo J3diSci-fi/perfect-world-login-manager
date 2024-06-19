@@ -1,3 +1,5 @@
+from tkinter import StringVar
+from tkinter import ttk
 import customtkinter as ctk
 from CTkMenuBar import *
 from CTkTable import *
@@ -7,12 +9,19 @@ from PIL import Image
 import json
 import os
 from src.shortcutscontroller import criar_atalho,editar_atalho,excluir_atalho,excluir_todos_atalhos
-from src.execs import exec_element,close_all_pws
+from src.execs import close_all_pws,add_to_queue,set_all_status_off
+import threading
+import time
 
 browse_image = ctk.CTkImage(Image.open("./res/search.png"), size=(20, 20))
 visible_on = ctk.CTkImage(Image.open("./res/visibility_icon.png"), size=(20, 20))
 visible_off = ctk.CTkImage(Image.open("./res/off_visibility_icon.png"), size=(20, 20))
 backgrond_image = ctk.CTkImage(Image.open("./res/background.png"),size=(350,350))
+seta_cima = ctk.CTkImage(Image.open("./res/seta-para-cima.png"),size=(16,16))
+seta_baixo =ctk.CTkImage(Image.open("./res/seta-para-baixo.png"),size=(16,16))
+confirm = ctk.CTkImage(Image.open("./res/confirm.png"),size=(16,16))
+cancel = ctk.CTkImage(Image.open("./res/cancel.png"),size=(16,16))
+back = ctk.CTkImage(Image.open("./res/back.png"),size=(24,24))
 
 class Root(ctk.CTk):
 
@@ -107,6 +116,7 @@ class Manager(ctk.CTkToplevel):
         self.__framebottom_table()
 
     def close_all(self):
+        set_all_status_off()
         self.destroy()
         self.master.destroy()  # Fecha a janela principal (Root)
 
@@ -260,7 +270,7 @@ class Manager(ctk.CTkToplevel):
                         icon="info", option_1="Abrir", option_2="Editar",option_3='Excluir')
 
             if msg.get() == 'Abrir':
-                exec_element(row_current_data[0])
+                add_to_queue(row_current_data[0],row_current_data[1])
 
             elif msg.get() == 'Excluir':  # Opção "Excluir" selecionada
                 # Encontrar e remover a conta correspondente no JSON
@@ -385,7 +395,6 @@ class Manager(ctk.CTkToplevel):
                     icon="info", option_1="Sim", option_2="Não")
         
         if msg.get()=="Sim":
-            print('x')
             close_all_pws()
 
     def reset_app(self):
@@ -405,8 +414,8 @@ class Manager(ctk.CTkToplevel):
             self.destroy()
         
     def __comboWindow(self):
-
-        CTkMessagebox(title="EM CONSTRUÇÃO!!", message="EM CONSTRUÇÃO!!", icon="cancel")
+        self.withdraw()
+        ComboRoot(self)
 
 class EditLogin(ctk.CTkToplevel):
     def __init__(self, master, login='None',password='None',nickname='None',icon_path='None',row_index=0):
@@ -417,6 +426,9 @@ class EditLogin(ctk.CTkToplevel):
         self.nickname = nickname
         self.currentPath = icon_path
         self.row_index = row_index
+
+        self.grab_set()
+        self.focus()
 
         print(icon_path)
 
@@ -548,3 +560,312 @@ class EditLogin(ctk.CTkToplevel):
         editar_atalho(self.login,login,password,nickname,icon_path)
 
         self.destroy()
+
+class ComboRoot(ctk.CTkToplevel):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+
+        self.__windowcfg()
+        self.__elements()
+
+        self.grab_set()
+        self.focus()
+
+        # Iniciar thread para atualizar a Treeview
+        self.flagThread = True
+        self.update_thread = threading.Thread(target=self.auto_update_treeview)
+        self.update_thread.start()
+
+    def close_all(self):
+        self.flagThread = False
+        self.master.deiconify()
+        self.destroy()  # Fecha a janela principal (Root)
+
+    def __windowcfg(self):
+        self.title("Combozada")
+        self.resizable(False, False)
+        self.protocol("WM_DELETE_WINDOW", self.close_all)
+
+        window_width = 702
+        window_height = 380
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+        self.after(200, lambda: self.wm_iconbitmap('./res/icon.ico'))
+        self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
+
+    def __elements(self):
+        frame = ctk.CTkFrame(self)
+        frame.place(x=265, y=10)
+
+        label_instruct = ctk.CTkLabel(frame, text="Em qual tecla está o ataque auxiliar e macro nas contas?")
+        label_instruct.grid(row=0, column=0, padx=10, pady=10)
+
+        # Frame 2
+        frame2 = ctk.CTkFrame(self)
+        frame2.place(x=230, y=70)
+
+        label_atq_auxiliar = ctk.CTkLabel(frame2, text="Tecla Ataque Auxiliar\n(Pegar TG do Líder):")
+        label_atq_auxiliar.grid(row=0, column=0, padx=10, pady=10)
+
+        keys = self.get_keyboard_keys()
+        self.combo_box_tecla_atq_auxiliar = ctk.CTkComboBox(frame2, state='readonly', values=keys)
+        self.combo_box_tecla_atq_auxiliar.grid(row=0, column=1, padx=10, pady=10)
+        
+        self.button_cancel_atq_auxiliar = ctk.CTkButton(frame2, image=cancel, text="", command=self.cancel_aux_attack,width=10 , state = 'disabled', fg_color='gray')
+        self.button_cancel_atq_auxiliar.grid(row=0, column=2, padx=10, pady=10)
+
+        self.button_confirm_atq_auxiliar = ctk.CTkButton(frame2, image=confirm, text="", command=self.confirm_aux_attack,width=10)
+        self.button_confirm_atq_auxiliar.grid(row=0, column=3, padx=10, pady=10)
+
+        label_macro = ctk.CTkLabel(frame2, text="Teclas do Macro:")
+        label_macro.grid(row=1, column=0, padx=10, pady=10)
+
+        self.combo_box_tecla_macro = ctk.CTkComboBox(frame2, state='readonly', values=['F1 ao F8','1 ao 9'],width=100)
+        self.combo_box_tecla_macro.grid(row=1, column=1, padx=10, pady=10)
+
+        # Variável associada à entrada
+        self.macro_ms_var = StringVar()
+
+        # Adicionar observador à variável
+        self.macro_ms_var.trace_add("write", self.validate_numeric_input)
+
+        self.button_cancel_macro = ctk.CTkButton(frame2, image=cancel, text="", command=self.cancel_macro,width=10, state = 'disabled', fg_color='gray')
+        self.button_cancel_macro.grid(row=1, column=2, padx=10, pady=10)
+
+        self.button_confirm_macro = ctk.CTkButton(frame2, image=confirm, text="", command=self.confirm_macro,width=10)
+        self.button_confirm_macro.grid(row=1, column=3, padx=10, pady=10)
+
+        label_ms = ctk.CTkLabel(frame2,text='(ms) Recomendado=500-1000:')
+        label_ms.grid(row=2,column=0, padx=10, pady=10)
+
+        self.input_macro_ms = ctk.CTkEntry(frame2,width=100,textvariable=self.macro_ms_var)
+        self.input_macro_ms.grid(row=2,column=1, padx=10, pady=10)
+
+        self.button_cancel_macro_ms = ctk.CTkButton(frame2,image=cancel,text='', width=10, command=self.cancel_macro_ms,  state = 'disabled', fg_color='gray')
+        self.button_cancel_macro_ms.grid(row=2,column=2, padx=10, pady=10)
+
+        self.button_confirm_macro_ms = ctk.CTkButton(frame2,image=confirm,text='',width=10, command=self.confirm_macro_ms)
+        self.button_confirm_macro_ms.grid(row=2,column=3, padx=10, pady=10)
+
+        # Frame 3
+        frame3 = ctk.CTkFrame(self)
+        frame3.place(x=255, y=233)
+
+        label_hotkey_tg = ctk.CTkLabel(frame3, text="Hotkey pegar TG líder:")
+        label_hotkey_tg.grid(row=0, column=0, padx=10, pady=10)
+
+        self.combo_box_hotkey_tg = ctk.CTkComboBox(frame3, state='readonly', values=keys)
+        self.combo_box_hotkey_tg.grid(row=0, column=1, padx=10, pady=10)
+
+        self.button_cancel_hotkey_tg = ctk.CTkButton(frame3, image=cancel, text="", command=self.cancel_hotkey_tg,width=10, state = 'disabled', fg_color='gray')
+        self.button_cancel_hotkey_tg.grid(row=0, column=2, padx=10, pady=10)
+
+        self.button_confirm_hotkey_tg = ctk.CTkButton(frame3, image=confirm, text="", command=self.confirm_hotkey_tg,width=10)
+        self.button_confirm_hotkey_tg.grid(row=0, column=3, padx=10, pady=10)
+
+        label_hotkey_combar = ctk.CTkLabel(frame3, text="Hotkey para Combar:")
+        label_hotkey_combar.grid(row=1, column=0, padx=10, pady=10)
+
+        self.combo_box_hotkey_combar = ctk.CTkComboBox(frame3, state='readonly', values=keys)
+        self.combo_box_hotkey_combar.grid(row=1, column=1, padx=10, pady=10)
+
+        self.button_cancel_hotkey_combar = ctk.CTkButton(frame3, image=cancel, text="", command=self.cancel_hotkey_combar,width=10, state = 'disabled', fg_color='gray')
+        self.button_cancel_hotkey_combar.grid(row=1, column=2, padx=10, pady=10)
+
+        self.button_confirm_hotkey_combar = ctk.CTkButton(frame3, image=confirm, text="", command=self.confirm_hotkey_combar,width=10)
+        self.button_confirm_hotkey_combar.grid(row=1, column=3, padx=10, pady=10)
+
+        # Frame 4 - Treeview e Botões
+        frame4 = ctk.CTkFrame(self)
+        frame4.place(x=10, y=10)
+
+        label5 = ctk.CTkLabel(frame4, text="(Irá combar na ordem)\nO Líder da PT deve ser o primeiro!")
+        label5.pack(side='top', padx=10, pady=5)
+
+        style = ttk.Style()
+        style.theme_use("clam")  # Using a modern theme as a base
+        style.configure("Treeview",
+                        background="#2e2e2e",
+                        foreground="white",
+                        rowheight=25,
+                        fieldbackground="#2e2e2e")
+        style.map('Treeview', background=[('selected', '#4a4a4a')])
+
+        style.configure("Treeview.Heading", background="#4a4a4a", foreground="white", font=("Arial", 10, "bold"))
+        style.configure("Treeview.Cell", anchor="center")
+
+        self.tree = ttk.Treeview(frame4, columns=('Personagens Logados',), show='headings', style="Treeview",height=13)
+        self.tree.heading('Personagens Logados', text='Personagens Logados', anchor='center')
+        self.tree.column('Personagens Logados', anchor='center')
+        self.tree.pack(side='top')
+
+        # Adicionar dados do arquivo JSON
+        self.update_treeview_data()
+
+        button_up = ctk.CTkButton(frame4, image=seta_cima, text="", command=self.move_up, width=10)
+        button_up.pack(side='left', padx=10, pady=5, anchor='e', expand=True)
+
+        button_down = ctk.CTkButton(frame4, image=seta_baixo, text="", command=self.move_down, width=10)
+        button_down.pack(side='right', padx=10, pady=5, anchor='w', expand=True)
+
+        button_back_to_manager = ctk.CTkButton(self, image=back, text="", command=self.close_all, width=10)
+        button_back_to_manager.place(x=655,y=340)
+
+    def get_treeview_data(self):
+        """Helper function to get current treeview data as a list of tuples"""
+        return [self.tree.item(item)['values'][0] for item in self.tree.get_children()]
+    
+    def validate_numeric_input(self, *args):
+        value = self.macro_ms_var.get()
+        if not value.isdigit():
+            self.macro_ms_var.set(''.join(filter(str.isdigit, value)))
+
+    def update_treeview_data(self):
+        current_data = self.get_treeview_data()
+        new_data = []
+
+        try:
+            with open('window_info.json', 'r') as file:
+                data = json.load(file)
+                for key, value in data.items():
+                    if value.get('status') == 'on':
+                        new_data.append(key)
+        except (FileNotFoundError, json.JSONDecodeError):
+            new_data = ['']
+
+        if current_data != new_data:
+            # Preserve the selected item
+            selected_item = self.tree.selection()
+            selected_value = self.tree.item(selected_item)['values'][0] if selected_item else None
+
+            self.tree.delete(*self.tree.get_children())
+            for item in new_data:
+                self.tree.insert('', 'end', values=(item,))
+
+            # Restore the selected item
+            if selected_value:
+                for item in self.tree.get_children():
+                    if self.tree.item(item)['values'][0] == selected_value:
+                        self.tree.selection_set(item)
+                        break
+
+    def auto_update_treeview(self):
+        while self.flagThread:
+            self.update_treeview_data()
+            time.sleep(3)  # Atualiza a cada 3 segundos
+
+    def auto_update_treeview(self):
+        while self.flagThread:
+            self.update_treeview_data()
+            time.sleep(3)  # Atualiza a cada 3 segundos
+
+    def get_keyboard_keys(self):
+        return [str(i) for i in range(1, 10)] + [f"F{i}" for i in range(1, 9)]
+
+    def cancel_aux_attack(self):
+        self.button_cancel_atq_auxiliar.configure(state='disabled')
+        self.button_cancel_atq_auxiliar.configure(fg_color='gray')
+        self.button_confirm_atq_auxiliar.configure(state='normal')
+        self.button_confirm_atq_auxiliar.configure(fg_color='#1F6AA5')
+        self.combo_box_tecla_atq_auxiliar.configure(state='normal')
+    
+    def confirm_aux_attack(self):
+        if self.combo_box_tecla_atq_auxiliar.get() == '':
+            CTkMessagebox(title="Info", message="Selecione a tecla do comando auxiliar na barra de skill.")
+            return
+        
+        self.button_cancel_atq_auxiliar.configure(state='normal')
+        self.button_cancel_atq_auxiliar.configure(fg_color='#1F6AA5')
+        self.button_confirm_atq_auxiliar.configure(state='disabled')
+        self.button_confirm_atq_auxiliar.configure(fg_color='gray')
+        self.combo_box_tecla_atq_auxiliar.configure(state='disabled')
+    
+    def cancel_macro(self):
+        self.button_cancel_macro.configure(state='disabled')
+        self.button_cancel_macro.configure(fg_color='gray')
+        self.button_confirm_macro.configure(state='normal')
+        self.button_confirm_macro.configure(fg_color='#1F6AA5')
+        self.combo_box_tecla_macro.configure(state='normal')
+
+    def confirm_macro(self):
+        if self.combo_box_tecla_macro.get() == '':
+            CTkMessagebox(title="Info", message="Selecione a tecla do combo na barra de skill.")
+            return
+        
+        self.button_cancel_macro.configure(state='normal')
+        self.button_cancel_macro.configure(fg_color='#1F6AA5')
+        self.button_confirm_macro.configure(state='disabled')
+        self.button_confirm_macro.configure(fg_color='gray')
+        self.combo_box_tecla_macro.configure(state='disabled')
+
+    def cancel_macro_ms(self):
+        self.button_cancel_macro_ms.configure(state='disabled')
+        self.button_cancel_macro_ms.configure(fg_color='gray')
+        self.button_confirm_macro_ms.configure(state='normal')
+        self.button_confirm_macro_ms.configure(fg_color='#1F6AA5')
+        self.input_macro_ms.configure(state='normal')
+    def confirm_macro_ms(self):
+        self.button_cancel_macro_ms.configure(state='normal')
+        self.button_cancel_macro_ms.configure(fg_color='#1F6AA5')
+        self.button_confirm_macro_ms.configure(state='disabled')
+        self.button_confirm_macro_ms.configure(fg_color='gray')
+        self.input_macro_ms.configure(state='disabled')
+    
+    def cancel_hotkey_tg(self):
+        self.button_cancel_hotkey_tg.configure(state='disabled')
+        self.button_cancel_hotkey_tg.configure(fg_color='gray')
+        self.button_confirm_hotkey_tg.configure(state='normal')
+        self.button_confirm_hotkey_tg.configure(fg_color='#1F6AA5')
+        self.combo_box_hotkey_tg.configure(state='normal')
+
+    def confirm_hotkey_tg(self):
+        if self.combo_box_hotkey_tg.get() == '':
+            CTkMessagebox(title="Info", message="Selecione a hotkey para pegar TG líder com as contas.")
+            return
+        
+        self.button_cancel_hotkey_tg.configure(state='normal')
+        self.button_cancel_hotkey_tg.configure(fg_color='#1F6AA5')
+        self.button_confirm_hotkey_tg.configure(state='disabled')
+        self.button_confirm_hotkey_tg.configure(fg_color='gray')
+        self.combo_box_hotkey_tg.configure(state='disabled')
+    
+    def cancel_hotkey_combar(self):
+        self.button_cancel_hotkey_combar.configure(state='disabled')
+        self.button_cancel_hotkey_combar.configure(fg_color='gray')
+        self.button_confirm_hotkey_combar.configure(state='normal')
+        self.button_confirm_hotkey_combar.configure(fg_color='#1F6AA5')
+        self.combo_box_hotkey_combar.configure(state='normal')
+
+    def confirm_hotkey_combar(self):
+        if self.combo_box_hotkey_combar.get() == '':
+            CTkMessagebox(title="Info", message="Selecione a hotkey para combar com as contas.")
+            return
+        
+        self.button_cancel_hotkey_combar.configure(state='normal')
+        self.button_cancel_hotkey_combar.configure(fg_color='#1F6AA5')
+        self.button_confirm_hotkey_combar.configure(state='disabled')
+        self.button_confirm_hotkey_combar.configure(fg_color='gray')
+        self.combo_box_hotkey_combar.configure(state='disabled')
+
+    def move_up(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            index = self.tree.index(selected_item)
+            if index > 0:
+                self.tree.move(selected_item, self.tree.parent(selected_item), index - 1)
+
+    def move_down(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            index = self.tree.index(selected_item)
+            if index < len(self.tree.get_children()) - 1:
+                self.tree.move(selected_item, self.tree.parent(selected_item), index + 1)
+
+    def expand_all(self):
+        for item in self.tree.get_children():
+            self.tree.item(item, open=True)
