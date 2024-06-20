@@ -3,8 +3,6 @@ import win32con
 import win32process
 import time
 
-process_name = 'Perfect World Aurora - www.pwaurora.net'
-
 def get_vk_code_from_key(key):
     vk_codes = {
         '0': 48, #0 key

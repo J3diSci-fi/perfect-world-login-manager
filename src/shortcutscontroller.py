@@ -82,3 +82,4 @@ def excluir_todos_atalhos():
     else:
         print("Nenhum atalho encontrado para excluir.")
         return False
+    

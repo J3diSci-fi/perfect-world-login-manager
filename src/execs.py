@@ -136,4 +136,13 @@ def check_process_status():
             print("Arquivo window_info.json não encontrado ou inválido.")
             time.sleep(2)
 
+def reset_json_window():
+    try:
+        with open('window_info.json', 'w') as file:
+            json.dump({}, file, indent=4)    
+        
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("Arquivo window_info.json não encontrado ou inválido.")
+    
+
 threading.Thread(target=check_process_status, daemon=True).start()
