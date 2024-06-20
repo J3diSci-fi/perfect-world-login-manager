@@ -1,6 +1,6 @@
 # Perfect World Auto Login
 
-Este projeto fornece uma ferramenta de auto login para o jogo Perfect World. Ele foi projetado para funcionar com qualquer versão de Perfect World.
+Este projeto fornece uma ferramenta de auto login + funcionalidade de combo PT para o jogo Perfect World. Ele foi projetado para funcionar com qualquer versão de Perfect World.
 
 ## Sistema Operacional
 
@@ -15,6 +15,7 @@ Este projeto fornece uma ferramenta de auto login para o jogo Perfect World. Ele
 - Exclusão de atalhos específicos.
 - Reset completo do aplicativo.
 - Fechamento de processos do jogo.
+- Ferramenta de combo para multicontas logadas pelo App.
 
 ## Instalação
 
