@@ -9,7 +9,7 @@ from PIL import Image
 import json
 import os
 from src.shortcutscontroller import criar_atalho,editar_atalho,excluir_atalho,excluir_todos_atalhos
-from src.execs import close_all_pws,add_to_queue,reset_json_window
+from src.execs import close_all_pws,add_to_queue
 import threading
 import time
 import keyboard
@@ -124,7 +124,6 @@ class Manager(ctk.CTkToplevel):
         self.__framebottom_table()
 
     def close_all(self):
-        reset_json_window()
         self.destroy()
         self.master.destroy()  # Fecha a janela principal (Root)
 
