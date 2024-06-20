@@ -800,7 +800,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.button_cancel_atq_auxiliar.configure(fg_color='gray')
         self.button_confirm_atq_auxiliar.configure(state='normal')
         self.button_confirm_atq_auxiliar.configure(fg_color='#1F6AA5')
-        self.combo_box_tecla_atq_auxiliar.configure(state='normal')
+        self.combo_box_tecla_atq_auxiliar.configure(state='readonly')
     
     def confirm_aux_attack(self):
         if self.combo_box_tecla_atq_auxiliar.get() == '':
@@ -818,7 +818,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.button_cancel_macro.configure(fg_color='gray')
         self.button_confirm_macro.configure(state='normal')
         self.button_confirm_macro.configure(fg_color='#1F6AA5')
-        self.combo_box_tecla_macro.configure(state='normal')
+        self.combo_box_tecla_macro.configure(state='readonly')
 
     def confirm_macro(self):
         if self.combo_box_tecla_macro.get() == '':
@@ -836,7 +836,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.button_cancel_macro_ms.configure(fg_color='gray')
         self.button_confirm_macro_ms.configure(state='normal')
         self.button_confirm_macro_ms.configure(fg_color='#1F6AA5')
-        self.input_macro_ms.configure(state='normal')
+        self.input_macro_ms.configure(state='readonly')
 
     def confirm_macro_ms(self):
         if self.input_macro_ms.get() == '':
@@ -853,7 +853,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.button_cancel_hotkey_tg.configure(fg_color='gray')
         self.button_confirm_hotkey_tg.configure(state='normal')
         self.button_confirm_hotkey_tg.configure(fg_color='#1F6AA5')
-        self.combo_box_hotkey_tg.configure(state='normal')
+        self.combo_box_hotkey_tg.configure(state='readonly')
 
     def confirm_hotkey_tg(self):
         if self.combo_box_hotkey_tg.get() == '':
@@ -871,7 +871,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.button_cancel_hotkey_combar.configure(fg_color='gray')
         self.button_confirm_hotkey_combar.configure(state='normal')
         self.button_confirm_hotkey_combar.configure(fg_color='#1F6AA5')
-        self.combo_box_hotkey_combar.configure(state='normal')
+        self.combo_box_hotkey_combar.configure(state='readonly')
 
     def confirm_hotkey_combar(self):
         if self.combo_box_hotkey_combar.get() == '':
@@ -942,6 +942,7 @@ class ComboRoot(ctk.CTkToplevel):
                         enviar_tecla_shift_1(hwnd)
                         enviar_tecla(hwnd,key_atq_auxiliar)  
 
+                time.sleep(int(ms)/1000)
                 lider = data[dataTable[0]]['hwnd']
                 ativar(lider)
 
