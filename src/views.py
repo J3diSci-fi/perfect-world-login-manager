@@ -9,11 +9,11 @@ from PIL import Image
 import json
 import os
 from src.shortcutscontroller import criar_atalho,editar_atalho,excluir_atalho,excluir_todos_atalhos
-from src.execs import close_all_pws,add_to_queue,set_all_status_off,reset_json_window
+from src.execs import close_all_pws,add_to_queue,reset_json_window
 import threading
 import time
 import keyboard
-from src.focus import ativar,desativar
+from src.focus import ativar
 from src.actions import enviar_tecla_shift_1, enviar_tecla
 
 browse_image = ctk.CTkImage(Image.open("./res/search.png"), size=(20, 20))
@@ -119,7 +119,6 @@ class Manager(ctk.CTkToplevel):
         self.__framebottom_table()
 
     def close_all(self):
-        set_all_status_off()
         reset_json_window()
         self.destroy()
         self.master.destroy()  # Fecha a janela principal (Root)

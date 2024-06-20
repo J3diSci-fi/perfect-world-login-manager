@@ -16,6 +16,15 @@ is_processing = False  # Variável para controlar o processamento da fila
 def exec_element(shortcut_name,nickname):
     global last_hwnd
 
+    try:
+        with open('executable_path.json', 'r') as file:
+            data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("Arquivo executable_path.json não encontrado ou inválido. Função --> exec_element")
+        time.sleep(2)
+
+    window_title = data['window_title']
+
     shortcut_name_path = __shortcut_path + f"\\{shortcut_name}.lnk"
     shell_process = subprocess.Popen(shortcut_name_path, shell=True)
     shell_pid = shell_process.pid
@@ -42,7 +51,7 @@ def exec_element(shortcut_name,nickname):
     elapsed_time = 0
 
     while elapsed_time < timeout:
-        windows = gw.getWindowsWithTitle("Perfect World Draco")
+        windows = gw.getWindowsWithTitle(window_title)
         if windows:
             current_hwnd = windows[0]._hWnd  # Pegar a primeira janela encontrada
             if current_hwnd != last_hwnd:
@@ -114,7 +123,7 @@ def set_all_status_off():
             json.dump(data, file, indent=4)    
         
     except (FileNotFoundError, json.JSONDecodeError):
-        print("Arquivo window_info.json não encontrado ou inválido.")
+        print("Arquivo window_info.json não encontrado ou inválido. Função -->set_all_status_off")
 
 def check_process_status():
     while True:
