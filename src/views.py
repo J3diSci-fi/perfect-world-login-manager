@@ -41,8 +41,8 @@ class Root(ctk.CTk):
         self.title("Selecionar Executável")
         self.resizable(False, False)
 
-        window_width = 463
-        window_height = 100
+        window_width = 530
+        window_height = 150
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -52,8 +52,8 @@ class Root(ctk.CTk):
         self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
 
     def __elements(self):
-        self.label = ctk.CTkLabel(self, text="Executável:")
-        self.label.grid(row=0, column=0, padx=10, pady=10)
+        label = ctk.CTkLabel(self, text="Executável:")
+        label.grid(row=0, column=0, padx=10, pady=10)
 
         self.entry = ctk.CTkEntry(self, width=300, state="readonly")
         self.entry.grid(row=0, column=1, padx=10, pady=10)
@@ -61,8 +61,14 @@ class Root(ctk.CTk):
         self.browse_button = ctk.CTkButton(self, image=browse_image, text="", command=self.browse_file, width=10)
         self.browse_button.grid(row=0, column=2, padx=10, pady=10)
 
+        label = ctk.CTkLabel(self, text="Título da Janela do PW:")
+        label.grid(row=1, column=0, padx=10, pady=10)
+
+        self.entry_window_title = ctk.CTkEntry(self, width=300, state="normal")
+        self.entry_window_title.grid(row=1, column=1, padx=10, pady=10)
+
         self.confirm_button = ctk.CTkButton(self, text="Confirmar", command=self.confirm)
-        self.confirm_button.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+        self.confirm_button.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(initialdir='./',filetypes=[("Executáveis", "*.exe")])
@@ -79,19 +85,18 @@ class Root(ctk.CTk):
     def confirm(self):
         exe_path = self.entry.get()
         folder_path = os.path.dirname(exe_path)
+        window_title = self.entry_window_title.get()
 
-        if exe_path:
+        if exe_path and window_title:
             data = {"path_executable": exe_path,
-                    "path_folder":folder_path}
+                    "path_folder":folder_path,
+                    "window_title":window_title}
             with open("executable_path.json", "w") as json_file:
                 json.dump(data, json_file, indent=4)
             
-            CTkMessagebox(title="Sucesso",message="O caminho do executável foi salvo com sucesso!",
-                  icon="check", option_1="Ok")
-
             self.open_Manager()
         else:
-            CTkMessagebox(title="Erro", message="Nenhum caminho de executável selecionado.", icon="cancel")
+            CTkMessagebox(title="Erro", message="Preencha os campos corretamente.", icon="cancel")
 
     def check_existing_executable(self):
 
