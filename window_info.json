@@ -1,17 +1,17 @@
 {
     "Barzini": {
-        "pid": 10576,
-        "hwnd": 24576542,
+        "pid": 18396,
+        "hwnd": 4000468,
         "status": "on"
     },
     "Soprano": {
-        "pid": 12540,
-        "hwnd": 24576542,
+        "pid": 11504,
+        "hwnd": 12977474,
         "status": "on"
     },
     "Tattaglia": {
-        "pid": 13924,
-        "hwnd": 21890978,
+        "pid": 8284,
+        "hwnd": 9503762,
         "status": "on"
     }
 }

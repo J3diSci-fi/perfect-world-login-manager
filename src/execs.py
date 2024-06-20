@@ -6,16 +6,14 @@ import psutil
 import pygetwindow as gw
 import threading
 import queue
+import win32gui
 
 __shortcut_path = os.getcwd() + r"\shortcuts"
 window_info_file = "window_info.json"
-last_hwnd = None
 task_queue = queue.Queue()
 is_processing = False  # Variável para controlar o processamento da fila
 
 def exec_element(shortcut_name,nickname):
-    global last_hwnd
-
     try:
         with open('executable_path.json', 'r') as file:
             data = json.load(file)
@@ -24,6 +22,7 @@ def exec_element(shortcut_name,nickname):
         time.sleep(2)
 
     window_title = data['window_title']
+    window_title_not_responding = window_title + " (Não está respondendo)"
 
     shortcut_name_path = __shortcut_path + f"\\{shortcut_name}.lnk"
     shell_process = subprocess.Popen(shortcut_name_path, shell=True)
@@ -52,22 +51,32 @@ def exec_element(shortcut_name,nickname):
 
     while elapsed_time < timeout:
         windows = gw.getWindowsWithTitle(window_title)
+        if not windows:
+           windows = gw.getWindowsWithTitle(window_title_not_responding)
+        
         if windows:
-            current_hwnd = windows[0]._hWnd  # Pegar a primeira janela encontrada
-            if current_hwnd != last_hwnd:
-                hwnd = current_hwnd
-                break
+            hwnd = windows[0]._hWnd
+            win32gui.SetWindowText(hwnd, f"{nickname}")
+            break
+
         time.sleep(interval)
         elapsed_time += interval
+    
+    timeout = 30  # tempo máximo de espera em segundos
+    interval = 1  # intervalo de verificação em segundos
+    elapsed_time = 0
 
-    if hwnd is None:
-        return None  # Não encontrou a nova janela
+    while elapsed_time < timeout:
+        windows = gw.getWindowsWithTitle(nickname)
+        if windows:
+            hwnd = windows[0]._hWnd 
+            break
 
+        time.sleep(interval)
+        elapsed_time += interval
+    
     # Atualizar o arquivo JSON com as informações do processo
     update_window_info(nickname, target_pid, hwnd)
-
-    # Atualizar o último hwnd
-    last_hwnd = hwnd
 
     print(windows)
     print(hwnd)
