@@ -932,7 +932,8 @@ class ComboRoot(ctk.CTkToplevel):
                         data = json.load(file)
                 except (FileNotFoundError, json.JSONDecodeError):
                     print('Error')
-
+                
+                
                 for index, key in enumerate(dataTable):
                     if index != 0:
                         hwnd = data[key]['hwnd']
@@ -940,7 +941,10 @@ class ComboRoot(ctk.CTkToplevel):
                         time.sleep(int(ms)/1000)
                         enviar_tecla_shift_1(hwnd)
                         enviar_tecla(hwnd,key_atq_auxiliar)  
-        
+
+                lider = data[dataTable[0]]['hwnd']
+                ativar(lider)
+
         if event.name == hotkey_combar:
             print(f"Tecla {hotkey_combar} solta")
             if (self.button_confirm_atq_auxiliar.cget('state') == 'normal') or \
@@ -968,7 +972,25 @@ class ComboRoot(ctk.CTkToplevel):
                             hwnd = data[key]['hwnd']
                             ativar(hwnd)
                             time.sleep(int(ms)/1000)
-                            enviar_tecla(hwnd,tecla)  
+                            enviar_tecla(hwnd,tecla)
+
+                if keys_action == "1 ao 9":
+                    key_list = [f"{i}" for i in range(1, 10)]
+                    dataTable = self.print_treeview_values()
+
+                    try:
+                        with open('window_info.json', 'r') as file:
+                            data = json.load(file)
+                    except (FileNotFoundError, json.JSONDecodeError):
+                        print('Error')
+                              
+                    for tecla in key_list:
+                        for index, key in enumerate(dataTable):
+                            print(tecla)
+                            hwnd = data[key]['hwnd']
+                            ativar(hwnd)
+                            time.sleep(int(ms)/1000)
+                            enviar_tecla(hwnd,tecla)
 
     def print_treeview_values(self):
         data = self.get_treeview_data()
