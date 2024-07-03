@@ -1,3 +1,5 @@
+.gitignore
+
 env/
 
 # Ignorar a pasta shortcuts
@@ -8,6 +10,7 @@ data.json
 executable_path.json
 main.cmd
 main.exe
+window_info.json
 
 # Ignorar a pasta __pycache__ dentro de src
 src/__pycache__/

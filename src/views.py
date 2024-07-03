@@ -602,7 +602,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self.close_all)
 
         window_width = 702
-        window_height = 420
+        window_height = 500
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - window_width) // 2

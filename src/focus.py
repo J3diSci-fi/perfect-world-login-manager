@@ -21,5 +21,3 @@ def desativar(hwnd):
         print(f"Janela com hwnd {hwnd} desfocada.")
     except Exception as e:
         print(f"Erro ao desfocar a janela: {str(e)}")
-
-ativar(9503762)
