@@ -23,6 +23,9 @@ def get_vk_code_from_key(key):
         'F6': 117,
         'F7': 118,
         'F8': 119,
+        "'": 222, # Aspas simples
+        'UP': 38, # Seta para cima
+        'DOWN': 40, # Seta para baixo
     }
     
     return vk_codes.get(key,None)

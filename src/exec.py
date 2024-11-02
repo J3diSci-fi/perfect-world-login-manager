@@ -8,6 +8,7 @@ import win32process
 import json
 
 current_state = []
+flag_treeview = True
 
 def find_launcher():
     # Lê o arquivo JSON para obter o caminho do executável e o diretório
@@ -15,7 +16,7 @@ def find_launcher():
         dados = json.load(f)
         caminho_executavel = dados["path_executable"]  # Obtém o caminho do executável
         diretorio_atual = dados["path_folder"]  # Obtém o diretório atual do JSON
-    
+
     # Verifica até três diretórios anteriores ao do projeto
     for i in range(3):  # Verifica até três diretórios anteriores
         diretorio_anterior = os.path.abspath(os.path.join(diretorio_atual, '..', '..' * i))
@@ -25,10 +26,8 @@ def find_launcher():
         
         # Verifica se a pasta "launcher" existe
         if os.path.isdir(caminho_launcher):
-            # Caminho do executável
-            caminho_executavel = os.path.join(caminho_launcher, 'Launcher.exe')
+            # Executa o executável do caminho lido do JSON
             if os.path.isfile(caminho_executavel):
-                # Executa o Launcher.exe
                 subprocess.run(caminho_executavel)
                 print(f"Executando {caminho_executavel}")
                 return
@@ -116,12 +115,6 @@ def exec_shortcut(login):
 def start_shortcut(login):
     thread = threading.Thread(target=exec_shortcut,args=(login,))
     thread.start()
-
-def close_all_pws():
-    process_names = ["elementclient_32.exe","elementclient.exe", "elementclient_64.exe", "ELEMENTCLIENT.exe"]
-
-    for process_name in process_names:
-        os.system(f"taskkill /f /im {process_name}")
 
 class TreeviewManager:
     def __init__(self, master):

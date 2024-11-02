@@ -9,7 +9,7 @@ from PIL import Image
 import json
 import os
 from src.shortcutscontroller import criar_atalho,editar_atalho,excluir_atalho,excluir_todos_atalhos
-from src.execs import close_all_pws,add_to_queue
+from src.execs import current_state,close_all_pws,start_shortcut,exec_launcher,state_elements,TreeviewManager
 import threading
 import time
 import keyboard
@@ -21,10 +21,16 @@ visible_on = ctk.CTkImage(Image.open("./res/visibility_icon.png"), size=(20, 20)
 visible_off = ctk.CTkImage(Image.open("./res/off_visibility_icon.png"), size=(20, 20))
 backgrond_image = ctk.CTkImage(Image.open("./res/background.png"),size=(350,350))
 seta_cima = ctk.CTkImage(Image.open("./res/seta-para-cima.png"),size=(16,16))
-seta_baixo =ctk.CTkImage(Image.open("./res/seta-para-baixo.png"),size=(16,16))
+seta_baixo = ctk.CTkImage(Image.open("./res/seta-para-baixo.png"),size=(16,16))
+seta_direita = ctk.CTkImage(Image.open("./res/seta-direita.png"),size=(16,16))
+seta_esquerda = ctk.CTkImage(Image.open("./res/seta-esquerda.png"),size=(16,16))
 confirm = ctk.CTkImage(Image.open("./res/confirm.png"),size=(16,16))
 cancel = ctk.CTkImage(Image.open("./res/cancel.png"),size=(16,16))
-back = ctk.CTkImage(Image.open("./res/back.png"),size=(24,24))
+back = ctk.CTkImage(Image.open("./res/back.png"),size=(20,20))
+maximizar = ctk.CTkImage(Image.open("./res/maximizar.png"),size=(24,24))
+
+emoji1 = ctk.CTkImage(Image.open("./res/emoji1.png"),size=(96,96))
+racas_humanos = ctk.CTkImage(Image.open("./res/racas_humanos.png"),size=(160,160))
 
 class Root(ctk.CTk):
 
@@ -41,8 +47,8 @@ class Root(ctk.CTk):
         self.title("Selecionar Executável")
         self.resizable(False, False)
 
-        window_width = 530
-        window_height = 150
+        window_width = 460
+        window_height = 100
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -61,14 +67,8 @@ class Root(ctk.CTk):
         self.browse_button = ctk.CTkButton(self, image=browse_image, text="", command=self.browse_file, width=10)
         self.browse_button.grid(row=0, column=2, padx=10, pady=10)
 
-        label = ctk.CTkLabel(self, text="Título da Janela do PW:")
-        label.grid(row=1, column=0, padx=10, pady=10)
-
-        self.entry_window_title = ctk.CTkEntry(self, width=300, state="normal")
-        self.entry_window_title.grid(row=1, column=1, padx=10, pady=10)
-
         self.confirm_button = ctk.CTkButton(self, text="Confirmar", command=self.confirm)
-        self.confirm_button.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+        self.confirm_button.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(initialdir='./',filetypes=[("Executáveis", "*.exe")])
@@ -85,18 +85,16 @@ class Root(ctk.CTk):
     def confirm(self):
         exe_path = self.entry.get()
         folder_path = os.path.dirname(exe_path)
-        window_title = self.entry_window_title.get()
 
-        if exe_path and window_title:
+        if exe_path:
             data = {"path_executable": exe_path,
-                    "path_folder":folder_path,
-                    "window_title":window_title}
+                    "path_folder":folder_path}
             with open("executable_path.json", "w") as json_file:
                 json.dump(data, json_file, indent=4)
             
             self.open_Manager()
         else:
-            CTkMessagebox(title="Erro", message="Preencha os campos corretamente.", icon="cancel")
+            CTkMessagebox(title="Erro", message="Selecione o executável.", icon="cancel")
 
     def check_existing_executable(self):
 
@@ -123,6 +121,11 @@ class Manager(ctk.CTkToplevel):
         self.__frameTable()
         self.__framebottom_table()
 
+        self.comboView = ComboRoot(self)
+        self.comboView.withdraw()
+
+        state_elements()
+
     def close_all(self):
         self.destroy()
         self.master.destroy()  # Fecha a janela principal (Root)
@@ -144,9 +147,27 @@ class Manager(ctk.CTkToplevel):
 
     def __elements(self):
         menu = CTkMenuBar(master=self)
+
+        # Menu Combo
         menu.add_cascade("Combo",command=self.__comboWindow)
-        menu.add_cascade("Mudar Caminho Executável",command=self.change_executable_path)
-        menu.add_cascade("Resetar App",command=self.reset_app)
+
+        # Menu Atualizar PW
+        atualizar_pw_menu = menu.add_cascade("Atualizar PW")
+        atualizar_pw_dropdown = CustomDropdownMenu(widget=atualizar_pw_menu)
+        atualizar_pw_dropdown.add_option(option="Abrir Launcher", command=self.open_launcher)
+
+        # Menu Config
+        config_menu = menu.add_cascade("Config")
+        config_dropdown = CustomDropdownMenu(widget=config_menu)
+        config_dropdown.add_option(option="Binds", command=self.open_binds)  # Substitua com a ação desejada
+        config_dropdown.add_option(option="Mudar Caminho Executável", command=self.change_executable_path)
+        config_dropdown.add_option(option="Resetar Manager", command=self.reset_app)  # Substitua com a ação desejada
+
+    def open_launcher(self):
+        exec_launcher()
+
+    def open_binds(self):
+        BindRoot()
 
     def combo_action(self):
         # Action to perform when Combo is selected
@@ -277,7 +298,7 @@ class Manager(ctk.CTkToplevel):
                         icon="info", option_1="Abrir", option_2="Editar",option_3='Excluir')
 
             if msg.get() == 'Abrir':
-                add_to_queue(row_current_data[0],row_current_data[1])
+                start_shortcut(row_current_data[0])
 
             elif msg.get() == 'Excluir':  # Opção "Excluir" selecionada
                 # Encontrar e remover a conta correspondente no JSON
@@ -422,7 +443,7 @@ class Manager(ctk.CTkToplevel):
         
     def __comboWindow(self):
         self.withdraw()
-        ComboRoot(self)
+        self.comboView.deiconify()
 
 class EditLogin(ctk.CTkToplevel):
     def __init__(self, master, login='None',password='None',nickname='None',icon_path='None',row_index=0):
@@ -572,427 +593,372 @@ class ComboRoot(ctk.CTkToplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
+        self.__windowcfg()
+        self.__buttons()
+        self.__treeview()
+        self.__treeview2()
+        
+        self.previous_state = []
+        
+        self.list_second_tree = []
 
+        # Instancia o gerenciador de Treeview
+        self.treeview_manager = TreeviewManager(self)
+        self.treeview_manager.start()
+
+    def close_all(self):
+        self.master.deiconify()
+        self.withdraw()
+
+    def __windowcfg(self):
+        self.title("Combo")
+        self.resizable(False, False)
+        self.protocol("WM_DELETE_WINDOW", self.close_all)
+
+        self.window_width = 702
+        self.window_height = 500
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - self.window_width) // 2
+        y = (screen_height - self.window_height) // 2
+        self.geometry(f"{self.window_width}x{self.window_height}+{x}+{y}")
+
+        self.after(200, lambda: self.wm_iconbitmap('./res/icon.ico'))
+        self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
+    
+    def __buttons(self):
+        label_img = ctk.CTkLabel(self,text='',image=racas_humanos)
+        label_img.place(x=265,y=10)
+
+        # Adicionando os novos botões
+        self.btn_left = ctk.CTkButton(self,width=50,image=seta_esquerda, text="", command=self.__leftButton)
+        self.btn_left.place(x=325, y=180)  # Posição do botão à esquerda
+
+        self.btn_right = ctk.CTkButton(self,width=50,image=seta_direita, text="", command=self.__rightButton)
+        self.btn_right.place(x=325, y=150)  # Posição do botão à direita
+
+        self.btn_up = ctk.CTkButton(self,width=50,image=seta_cima, text="", command=self.__upButton)
+        self.btn_up.place(x=500, y=350)  # Posição do botão à esquerda
+
+        self.btn_down = ctk.CTkButton(self,width=50,image=seta_baixo, text="", command=self.__downButton)
+        self.btn_down.place(x=560, y=350)  # Posição do botão à direita
+
+        self.btn_maximizer = ctk.CTkButton(self,width=10, image=maximizar, text='',command=self.__buttonOrder)
+        self.btn_maximizer.place(x=self.window_width-50,y=self.window_height - 43)
+
+        self.btn_back = ctk.CTkButton(self,width=10, image=back, text='',command=self.close_all)
+        self.btn_back.place(x=10,y=self.window_height - 43)
+
+    def __treeview(self):
+        # Criação do Treeview para exibir contas com tema escuro
+        label = ctk.CTkLabel(self,text='CONTAS ABERTA(S)')
+        label.place(x=80,y=10)
+
+        self.tree = ttk.Treeview(self, columns=("Nickname",), show="headings", style="Dark.Treeview")
+        self.tree.heading("Nickname", text="Nickname")
+        
+        # Centraliza os dados na coluna
+        self.tree.column("Nickname", anchor="center")  # Centraliza a coluna "Nickname"
+        
+        # Adicionando um scrollbar
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=self.scrollbar.set)
+        
+        self.tree.place(x=10, y=40, width=250, height=300)
+        self.scrollbar.place(x=260, y=40, height=300)  # Posiciona o scrollbar ao lado da tree
+
+    def __treeview2(self):
+        # Criação do Treeview para exibir contas com tema escuro
+        label = ctk.CTkLabel(self, text='CONTAS NO COMBO')
+        label.place(x=495, y=10)  # Ajuste a posição conforme necessário
+
+        self.tree2 = ttk.Treeview(self, columns=("Nickname",), show="headings", style="Dark.Treeview")
+        self.tree2.heading("Nickname", text="Nickname")
+        
+        # Centraliza os dados na coluna
+        self.tree2.column("Nickname", anchor="center")  # Centraliza a coluna "Nickname"
+        
+        # Adicionando um scrollbar
+        self.scrollbar2 = ttk.Scrollbar(self, orient="vertical", command=self.tree2.yview)
+        self.tree2.configure(yscrollcommand=self.scrollbar2.set)
+        
+        self.tree2.place(x=425, y=40, width=250, height=300)  # Ajuste a posição e tamanho conforme necessário
+        self.scrollbar2.place(x=675, y=40, height=300)  # Posiciona o scrollbar ao lado da tree
+
+    def __upButton(self):
+        selected_item = self.tree2.selection()  # Obtém o item selecionado na segunda Treeview
+        if selected_item:
+            selected_nickname = self.tree2.item(selected_item, 'values')[0]  # Obtém o nickname
+            index = self.list_second_tree.index(selected_nickname)  # Encontra o índice do nickname na lista
+            if index > 0:  # Verifica se não é o primeiro item
+                # Troca os itens na lista
+                self.list_second_tree[index], self.list_second_tree[index - 1] = self.list_second_tree[index - 1], self.list_second_tree[index]
+                self.atualizar_treeview2()  # Atualiza a segunda Treeview
+                self.tree2.selection_set(self.tree2.get_children()[index - 1])  # Mantém a célula selecionada
+
+    def __downButton(self):
+        selected_item = self.tree2.selection()  # Obtém o item selecionado na segunda Treeview
+        if selected_item:
+            selected_nickname = self.tree2.item(selected_item, 'values')[0]  # Obtém o nickname
+            index = self.list_second_tree.index(selected_nickname)  # Encontra o índice do nickname na lista
+            if index < len(self.list_second_tree) - 1:  # Verifica se não é o último item
+                # Troca os itens na lista
+                self.list_second_tree[index], self.list_second_tree[index + 1] = self.list_second_tree[index + 1], self.list_second_tree[index]
+                self.atualizar_treeview2()  # Atualiza a segunda Treeview
+                self.tree2.selection_set(self.tree2.get_children()[index + 1])  # Mantém a célula selecionada
+
+    def __leftButton(self):
+        selected_item = self.tree2.selection()  # Obtém o item selecionado na segunda Treeview
+        if selected_item:
+            selected_nickname = self.tree2.item(selected_item, 'values')[0]  # Obtém o nickname
+            self.tree2.delete(selected_item)  # Remove da segunda Treeview
+            self.list_second_tree.remove(selected_nickname)  # Remove da lista
+
+    def __rightButton(self):
+        selected_item = self.tree.selection()  # Obtém o item selecionado na primeira Treeview
+        if selected_item:
+            selected_nickname = self.tree.item(selected_item, 'values')[0]  # Obtém o nickname
+            if selected_nickname not in self.list_second_tree:  # Verifica se já não está na lista
+                self.list_second_tree.append(selected_nickname)  # Adiciona à lista
+                self.atualizar_treeview2()  # Atualiza a segunda Treeview
+
+    def atualizar_treeview2(self):
+        # Limpa a Treeview2 antes de atualizar
+        self.tree2.delete(*self.tree2.get_children())
+        # Adiciona os nicknames da lista à Treeview2
+        for nickname in self.list_second_tree:
+            self.tree2.insert("", "end", values=(nickname,))   
+
+    def atualizar_treeview(self):
+        # Obtém o estado atual das contas
+        current_nicknames = [entry[0] for entry in current_state]
+
+        # Verifica se o estado atual é diferente do estado anterior
+        if current_nicknames != self.previous_state:
+            # Limpa o Treeview antes de atualizar
+            self.tree.delete(*self.tree.get_children())
+            
+            # Adiciona os logins ativos do current_state ao Treeview
+            for entry in current_state:
+                nickname = entry[0]  # Obtém o nickname
+                self.tree.insert("", "end", values=(nickname,))  # Insere o nickname no Treeview
+            
+            # Atualiza o estado anterior
+            self.previous_state = current_nicknames
+
+    def __buttonOrder(self):
+        viewOrder(self,self.list_second_tree)
+        self.withdraw()
+
+class viewOrder(ctk.CTkToplevel):
+    def __init__(self, master=None, list_second_tree = []):
+        super().__init__(master)
+        self.list_second_tree = list_second_tree
+        self.__windowcfg()
+        self.__treeview()
+        self.__elements()
+
+        # Carregar as teclas do arquivo JSON
+        self.para_baixo, self.para_cima = self.load_bind_keys()
+
+        self.setup_key_listener()
+        self.previous_state = []
+
+        # Instancia o gerenciador de Treeview
+        self.treeview_manager = TreeviewManager(self)
+        self.treeview_manager.start()
+
+    def load_bind_keys(self):
+        try:
+            with open('binds.json', 'r') as json_file:
+                settings_data = json.load(json_file)
+                para_baixo = settings_data.get("para_baixo", "'")
+                para_cima = settings_data.get("para_cima", "+")
+        except (FileNotFoundError, json.JSONDecodeError):
+            para_baixo = "'"
+            para_cima = None
+        
+        return para_baixo, para_cima
+
+    def atualizar_treeview(self):
+        # Obtém o estado atual das contas
+        current_nicknames = self.list_second_tree  # Usa list_second_tree em vez de current_state
+
+        # Verifica se o estado atual é diferente do estado anterior
+        if current_nicknames != self.previous_state:
+            # Limpa o Treeview antes de atualizar
+            self.tree.delete(*self.tree.get_children())
+            
+            # Adiciona os logins ativos de list_second_tree ao Treeview
+            for nickname in current_nicknames:
+                self.tree.insert("", "end", values=(nickname,))  # Insere o nickname no Treeview
+            
+            # Seleciona a primeira célula
+            if current_nicknames:
+                first_item = self.tree.get_children()[0]
+                self.tree.selection_set(first_item)
+            
+            # Atualiza o estado anterior
+            self.previous_state = current_nicknames
+
+    def close_all(self):
+        self.treeview_manager.stop()
+        self.master.deiconify()
+        self.destroy()  # Fecha a janela principal (Root)
+
+    def __windowcfg(self):
+        self.protocol("WM_DELETE_WINDOW",lambda: self.close_all())
+        self.title("Order Contas")
+        self.resizable(False, False)
+        self.attributes('-topmost', True)
+
+        self.window_width = 200
+        self.window_height = 500
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - self.window_width) // 2
+        y = (screen_height - self.window_height) // 2
+        self.geometry(f"{self.window_width}x{self.window_height}+{x}+{y}")
+
+        self.after(200, lambda: self.wm_iconbitmap('./res/icon.ico'))
+        self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
+    
+    def __treeview(self):
+        # Criação do Treeview para exibir contas com tema escuro
+        self.tree = ttk.Treeview(self, columns=("Nickname",), show="headings", style="Dark.Treeview")
+        self.tree.heading("Nickname", text="Nickname")
+        
+        # Centraliza os dados na coluna
+        self.tree.column("Nickname", anchor="center")  # Centraliza a coluna "Nickname"
+        
+        self.tree.pack(fill="both", expand=True)
+
+    def __elements(self):
+        # ... código existente ...
+        
+        # Criação de um frame para organizar os botões horizontalmente
+        button_frame = ctk.CTkFrame(self)
+        button_frame.pack(fill="x", pady=10)
+
+        # Botão para voltar
+        back_button = ctk.CTkButton(button_frame, width=20, image=back, text="", command=self.__back_to_master)
+        back_button.pack(side="left", padx=10,pady=10)
+
+        # Botão para combar
+        combar_button = ctk.CTkButton(button_frame, text="Combar", command=self.__combar_action)
+        combar_button.pack(side="right", padx=10,pady=10)
+
+    def __back_to_master(self):
+        self.master.deiconify()  # Mostra a janela principal
+        keyboard.unhook_all()
+        self.withdraw()  # Esconde a janela 
+        
+    def __combar_action(self):
+        CTkMessagebox(title="Aviso", message="Em Construção", icon="info")
+
+    def setup_key_listener(self):
+        keyboard.on_release(self.on_key_up_event)
+
+    def select_next_cell(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            current_index = self.tree.index(selected_item)
+            next_index = (current_index + 1) % len(self.tree.get_children())
+            next_item = self.tree.get_children()[next_index]
+            self.tree.selection_set(next_item)
+            return self.tree.item(next_item, 'values')[0]  # Retorna o nickname
+
+    def select_previous_cell(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            current_index = self.tree.index(selected_item)
+            previous_index = (current_index - 1) % len(self.tree.get_children())
+            previous_item = self.tree.get_children()[previous_index]
+            self.tree.selection_set(previous_item)
+            return self.tree.item(previous_item, 'values')[0]  # Retorna o nickname
+
+    def on_key_up_event(self, event):
+        if event.name.upper() == self.para_baixo:
+            nickname = self.select_next_cell()
+            print(f"Próximo Nickname: {nickname}")  # Exemplo de uso
+        elif event.name.upper() == self.para_cima:
+            nickname = self.select_previous_cell()
+            print(f"Nickname Anterior: {nickname}")  # Exemplo de uso
+
+class BindRoot(ctk.CTkToplevel):
+    def __init__(self, master=None):
+        super().__init__(master)
         self.__windowcfg()
         self.__elements()
+        self.load_settings()  # Carrega as configurações ao inicializar
 
         self.grab_set()
         self.focus()
 
-        # Iniciar thread para atualizar a Treeview
-        self.flagThread = True
-        self.update_thread = threading.Thread(target=self.auto_update_treeview)
-        self.update_thread.start()
-        
-        self.setup_key_listener()
-
-        # Ensure treeview order functions are available
-        self.save_treeview_order()
-        self.restore_treeview_order([])
-
-    def close_all(self):
-        self.flagThread = False
-        self.master.deiconify()
-        keyboard.unhook_all()
-        self.destroy()  # Fecha a janela principal (Root)
-
     def __windowcfg(self):
-        self.title("Combozada")
+        self.title("Binds")  # Título alterado para "Binds"
         self.resizable(False, False)
-        self.protocol("WM_DELETE_WINDOW", self.close_all)
 
-        window_width = 702
-        window_height = 500
+        self.window_width = 280
+        self.window_height = 145
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
-        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        x = (screen_width - self.window_width) // 2
+        y = (screen_height - self.window_height) // 2
+        self.geometry(f"{self.window_width}x{self.window_height}+{x}+{y}")
 
         self.after(200, lambda: self.wm_iconbitmap('./res/icon.ico'))
         self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
 
     def __elements(self):
-        frame = ctk.CTkFrame(self)
-        frame.place(x=265, y=10)
+        # Label e Combobox para "Tecla Próxima Janela"
+        next_window_label = ctk.CTkLabel(self, text="Tecla para Baixo:")
+        next_window_label.grid(row=0, column=0, padx=10, pady=10)
 
-        label_instruct = ctk.CTkLabel(frame, text="Em qual tecla está o ataque auxiliar na barra de skill das contas?")
-        label_instruct.grid(row=0, column=0, padx=10, pady=10)
+        self.next_window_combobox = ctk.CTkComboBox(self, values=["'", "-", "DOWN"], state="readonly")  # Definido como não editável
+        self.next_window_combobox.grid(row=0, column=1, padx=10, pady=10)
 
-        # Frame 2
-        frame2 = ctk.CTkFrame(self)
-        frame2.place(x=230, y=70)
+        # Label e Combobox para "Tecla Janela Anterior"
+        previous_window_label = ctk.CTkLabel(self, text="Tecla para Cima:")
+        previous_window_label.grid(row=1, column=0, padx=10, pady=10)
 
-        label_atq_auxiliar = ctk.CTkLabel(frame2, text="Tecla Ataque Auxiliar\n(Pegar TG do Líder):")
-        label_atq_auxiliar.grid(row=0, column=0, padx=10, pady=10)
+        self.previous_window_combobox = ctk.CTkComboBox(self, values=["+", "UP"], state="readonly")  # Definido como não editável
+        self.previous_window_combobox.grid(row=1, column=1, padx=10, pady=10)
 
-        keys = self.get_keyboard_keys()
-        self.combo_box_tecla_atq_auxiliar = ctk.CTkComboBox(frame2, state='readonly', values=keys)
-        self.combo_box_tecla_atq_auxiliar.grid(row=0, column=1, padx=10, pady=10)
-        
-        self.button_cancel_atq_auxiliar = ctk.CTkButton(frame2, image=cancel, text="", command=self.cancel_aux_attack,width=10 , state = 'disabled', fg_color='gray')
-        self.button_cancel_atq_auxiliar.grid(row=0, column=2, padx=10, pady=10)
+        # Botão "Salvar"
+        save_button = ctk.CTkButton(self, text="Salvar", command=self.save_settings)
+        save_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
 
-        self.button_confirm_atq_auxiliar = ctk.CTkButton(frame2, image=confirm, text="", command=self.confirm_aux_attack,width=10)
-        self.button_confirm_atq_auxiliar.grid(row=0, column=3, padx=10, pady=10)
+        # ... código existente ...
 
-        label_macro = ctk.CTkLabel(frame2, text="Sequência de Teclas:")
-        label_macro.grid(row=1, column=0, padx=10, pady=10)
-
-        self.combo_box_tecla_macro = ctk.CTkComboBox(frame2, state='readonly', values=['F1 ao F8','1 ao 9'],width=100)
-        self.combo_box_tecla_macro.grid(row=1, column=1, padx=10, pady=10)
-
-        # Variável associada à entrada
-        self.macro_ms_var = StringVar()
-
-        # Adicionar observador à variável
-        self.macro_ms_var.trace_add("write", self.validate_numeric_input)
-
-        self.button_cancel_macro = ctk.CTkButton(frame2, image=cancel, text="", command=self.cancel_macro,width=10, state = 'disabled', fg_color='gray')
-        self.button_cancel_macro.grid(row=1, column=2, padx=10, pady=10)
-
-        self.button_confirm_macro = ctk.CTkButton(frame2, image=confirm, text="", command=self.confirm_macro,width=10)
-        self.button_confirm_macro.grid(row=1, column=3, padx=10, pady=10)
-
-        label_ms = ctk.CTkLabel(frame2,text='(ms) Recomendado: 100-200 \n ou até menos')
-        label_ms.grid(row=2,column=0, padx=10, pady=10)
-
-        self.input_macro_ms = ctk.CTkEntry(frame2,width=100,textvariable=self.macro_ms_var)
-        self.input_macro_ms.grid(row=2,column=1, padx=10, pady=10)
-
-        self.button_cancel_macro_ms = ctk.CTkButton(frame2,image=cancel,text='', width=10, command=self.cancel_macro_ms,  state = 'disabled', fg_color='gray')
-        self.button_cancel_macro_ms.grid(row=2,column=2, padx=10, pady=10)
-
-        self.button_confirm_macro_ms = ctk.CTkButton(frame2,image=confirm,text='',width=10, command=self.confirm_macro_ms)
-        self.button_confirm_macro_ms.grid(row=2,column=3, padx=10, pady=10)
-
-        # Frame 3
-        frame3 = ctk.CTkFrame(self)
-        frame3.place(x=255, y=233)
-
-        label_hotkey_tg = ctk.CTkLabel(frame3, text="Hotkey pegar TG líder:")
-        label_hotkey_tg.grid(row=0, column=0, padx=10, pady=10)
-
-        self.combo_box_hotkey_tg = ctk.CTkComboBox(frame3, state='readonly', values=keys)
-        self.combo_box_hotkey_tg.grid(row=0, column=1, padx=10, pady=10)
-
-        self.button_cancel_hotkey_tg = ctk.CTkButton(frame3, image=cancel, text="", command=self.cancel_hotkey_tg,width=10, state = 'disabled', fg_color='gray')
-        self.button_cancel_hotkey_tg.grid(row=0, column=2, padx=10, pady=10)
-
-        self.button_confirm_hotkey_tg = ctk.CTkButton(frame3, image=confirm, text="", command=self.confirm_hotkey_tg,width=10)
-        self.button_confirm_hotkey_tg.grid(row=0, column=3, padx=10, pady=10)
-
-        label_hotkey_combar = ctk.CTkLabel(frame3, text="Hotkey para Combar:")
-        label_hotkey_combar.grid(row=1, column=0, padx=10, pady=10)
-
-        self.combo_box_hotkey_combar = ctk.CTkComboBox(frame3, state='readonly', values=keys)
-        self.combo_box_hotkey_combar.grid(row=1, column=1, padx=10, pady=10)
-
-        self.button_cancel_hotkey_combar = ctk.CTkButton(frame3, image=cancel, text="", command=self.cancel_hotkey_combar,width=10, state = 'disabled', fg_color='gray')
-        self.button_cancel_hotkey_combar.grid(row=1, column=2, padx=10, pady=10)
-
-        self.button_confirm_hotkey_combar = ctk.CTkButton(frame3, image=confirm, text="", command=self.confirm_hotkey_combar,width=10)
-        self.button_confirm_hotkey_combar.grid(row=1, column=3, padx=10, pady=10)
-
-        label_obs = ctk.CTkLabel(frame3, text="Obs: Não utilize a mesma tecla para ambas as Hotkeys(bug).")
-        label_obs.grid(row=2, column=0, columnspan=4, padx=10, pady=10)
-
-        # Frame 4 - Treeview e Botões
-        frame4 = ctk.CTkFrame(self)
-        frame4.place(x=10, y=10)
-
-        label5 = ctk.CTkLabel(frame4, text="(Irá combar na ordem)\nO Líder da PT deve ser o primeiro!")
-        label5.pack(side='top', padx=10, pady=5)
-
-        style = ttk.Style()
-        style.theme_use("clam")  # Using a modern theme as a base
-        style.configure("Treeview",
-                        background="#2e2e2e",
-                        foreground="white",
-                        rowheight=25,
-                        fieldbackground="#2e2e2e")
-        style.map('Treeview', background=[('selected', '#4a4a4a')])
-
-        style.configure("Treeview.Heading", background="#4a4a4a", foreground="white", font=("Arial", 10, "bold"))
-        style.configure("Treeview.Cell", anchor="center")
-
-        self.tree = ttk.Treeview(frame4, columns=('Personagens Logados',), show='headings', style="Treeview",height=15)
-        self.tree.heading('Personagens Logados', text='Personagens Logados', anchor='center')
-        self.tree.column('Personagens Logados', anchor='center')
-        self.tree.pack(side='top')
-
-        # Adicionar dados do arquivo JSON
-        self.update_treeview_data()
-
-        button_up = ctk.CTkButton(frame4, image=seta_cima, text="", command=self.move_up, width=10)
-        button_up.pack(side='left', padx=10, pady=5, anchor='e', expand=True)
-
-        button_down = ctk.CTkButton(frame4, image=seta_baixo, text="", command=self.move_down, width=10)
-        button_down.pack(side='right', padx=10, pady=5, anchor='w', expand=True)
-
-        button_back_to_manager = ctk.CTkButton(self, image=back, text="", command=self.close_all, width=10)
-        button_back_to_manager.place(x=655,y=383)
-
-    def get_treeview_data(self):
-        """Helper function to get current treeview data as a list of tuples"""
-        return [self.tree.item(item)['values'][0] for item in self.tree.get_children()]
-    
-    def validate_numeric_input(self, *args):
-        value = self.macro_ms_var.get()
-        if not value.isdigit():
-            self.macro_ms_var.set(''.join(filter(str.isdigit, value)))
-
-    def update_treeview_data(self):
-        current_data = self.get_treeview_data()
-        new_data = []
-
+    def load_settings(self):
+        # Tenta carregar as configurações do arquivo JSON
         try:
-            with open('window_info.json', 'r') as file:
-                data = json.load(file)
-                for key, value in data.items():
-                    if value.get('status') == 'on':
-                        new_data.append(key)
+            with open('binds.json', 'r') as json_file:
+                settings_data = json.load(json_file)
+                # Define os valores das comboboxes com base nos dados carregados
+                self.next_window_combobox.set(settings_data.get("para_baixo", "'"))  # Valor padrão se não encontrado
+                self.previous_window_combobox.set(settings_data.get("para_cima", "+"))  # Valor padrão se não encontrado
         except (FileNotFoundError, json.JSONDecodeError):
-            new_data = ['']
+            # Se o arquivo não existir ou estiver corrompido, define valores padrão
+            self.next_window_combobox.set("'")
+            self.previous_window_combobox.set("+")
 
-        if current_data != new_data:
-            selected_item = self.tree.selection()
-            selected_value = self.tree.item(selected_item)['values'][0] if selected_item else None
-            
-            # Save the current order of the treeview
-            current_order = self.save_treeview_order()
+    def save_settings(self):
+        # Obtém as teclas selecionadas
+        next_key = self.next_window_combobox.get()
+        previous_key = self.previous_window_combobox.get()
 
-            self.tree.delete(*self.tree.get_children())
-            for item in new_data:
-                self.tree.insert('', 'end', values=(item,))
-            
-            # Restore the treeview order
-            self.restore_treeview_order(current_order)
+        # Dados a serem salvos no JSON
+        settings_data = {
+            "para_baixo": next_key,
+            "para_cima": previous_key
+        }
 
-            # Restore the selected item
-            if selected_value:
-                for item in self.tree.get_children():
-                    if self.tree.item(item)['values'][0] == selected_value:
-                        self.tree.selection_set(item)
-                        break
-
-    def auto_update_treeview(self):
-        while self.flagThread:
-            self.update_treeview_data()
-            time.sleep(3)  # Atualiza a cada 3 segundos
-
-    def save_treeview_order(self):
-        """Saves the current order of items in the Treeview."""
-        return [self.tree.item(item)['values'][0] for item in self.tree.get_children()]
-
-    def restore_treeview_order(self, order):
-        """Restores the order of items in the Treeview based on the provided order."""
-        current_items = {self.tree.item(item)['values'][0]: item for item in self.tree.get_children()}
-        for value in order:
-            if value in current_items:
-                self.tree.move(current_items[value], '', 'end')
-
-    def get_keyboard_keys(self):
-        return [str(i) for i in range(1, 10)] + [f"F{i}" for i in range(1, 9)]
-
-    def cancel_aux_attack(self):
-        self.button_cancel_atq_auxiliar.configure(state='disabled')
-        self.button_cancel_atq_auxiliar.configure(fg_color='gray')
-        self.button_confirm_atq_auxiliar.configure(state='normal')
-        self.button_confirm_atq_auxiliar.configure(fg_color='#1F6AA5')
-        self.combo_box_tecla_atq_auxiliar.configure(state='readonly')
-    
-    def confirm_aux_attack(self):
-        if self.combo_box_tecla_atq_auxiliar.get() == '':
-            CTkMessagebox(title="Info", message="Selecione a tecla do comando auxiliar na barra de skill.")
-            return
-        
-        self.button_cancel_atq_auxiliar.configure(state='normal')
-        self.button_cancel_atq_auxiliar.configure(fg_color='#1F6AA5')
-        self.button_confirm_atq_auxiliar.configure(state='disabled')
-        self.button_confirm_atq_auxiliar.configure(fg_color='gray')
-        self.combo_box_tecla_atq_auxiliar.configure(state='disabled')
-    
-    def cancel_macro(self):
-        self.button_cancel_macro.configure(state='disabled')
-        self.button_cancel_macro.configure(fg_color='gray')
-        self.button_confirm_macro.configure(state='normal')
-        self.button_confirm_macro.configure(fg_color='#1F6AA5')
-        self.combo_box_tecla_macro.configure(state='readonly')
-
-    def confirm_macro(self):
-        if self.combo_box_tecla_macro.get() == '':
-            CTkMessagebox(title="Info", message="Selecione a tecla do combo na barra de skill.")
-            return
-        
-        self.button_cancel_macro.configure(state='normal')
-        self.button_cancel_macro.configure(fg_color='#1F6AA5')
-        self.button_confirm_macro.configure(state='disabled')
-        self.button_confirm_macro.configure(fg_color='gray')
-        self.combo_box_tecla_macro.configure(state='disabled')
-
-    def cancel_macro_ms(self):
-        self.button_cancel_macro_ms.configure(state='disabled')
-        self.button_cancel_macro_ms.configure(fg_color='gray')
-        self.button_confirm_macro_ms.configure(state='normal')
-        self.button_confirm_macro_ms.configure(fg_color='#1F6AA5')
-        self.input_macro_ms.configure(state='readonly')
-
-    def confirm_macro_ms(self):
-        if self.input_macro_ms.get() == '':
-            CTkMessagebox(title="Info", message="Preencha o campo ms.")
-            return
-        self.button_cancel_macro_ms.configure(state='normal')
-        self.button_cancel_macro_ms.configure(fg_color='#1F6AA5')
-        self.button_confirm_macro_ms.configure(state='disabled')
-        self.button_confirm_macro_ms.configure(fg_color='gray')
-        self.input_macro_ms.configure(state='disabled')
-    
-    def cancel_hotkey_tg(self):
-        self.button_cancel_hotkey_tg.configure(state='disabled')
-        self.button_cancel_hotkey_tg.configure(fg_color='gray')
-        self.button_confirm_hotkey_tg.configure(state='normal')
-        self.button_confirm_hotkey_tg.configure(fg_color='#1F6AA5')
-        self.combo_box_hotkey_tg.configure(state='readonly')
-
-    def confirm_hotkey_tg(self):
-        if self.combo_box_hotkey_tg.get() == '':
-            CTkMessagebox(title="Info", message="Selecione a hotkey para pegar TG líder com as contas.")
-            return
-        
-        self.button_cancel_hotkey_tg.configure(state='normal')
-        self.button_cancel_hotkey_tg.configure(fg_color='#1F6AA5')
-        self.button_confirm_hotkey_tg.configure(state='disabled')
-        self.button_confirm_hotkey_tg.configure(fg_color='gray')
-        self.combo_box_hotkey_tg.configure(state='disabled')
-    
-    def cancel_hotkey_combar(self):
-        self.button_cancel_hotkey_combar.configure(state='disabled')
-        self.button_cancel_hotkey_combar.configure(fg_color='gray')
-        self.button_confirm_hotkey_combar.configure(state='normal')
-        self.button_confirm_hotkey_combar.configure(fg_color='#1F6AA5')
-        self.combo_box_hotkey_combar.configure(state='readonly')
-
-    def confirm_hotkey_combar(self):
-        if self.combo_box_hotkey_combar.get() == '':
-            CTkMessagebox(title="Info", message="Selecione a hotkey para combar com as contas.")
-            return
-        
-        self.button_cancel_hotkey_combar.configure(state='normal')
-        self.button_cancel_hotkey_combar.configure(fg_color='#1F6AA5')
-        self.button_confirm_hotkey_combar.configure(state='disabled')
-        self.button_confirm_hotkey_combar.configure(fg_color='gray')
-        self.combo_box_hotkey_combar.configure(state='disabled')
-
-    def move_up(self):
-        selected_item = self.tree.selection()
-        if selected_item:
-            index = self.tree.index(selected_item)
-            if index > 0:
-                self.tree.move(selected_item, self.tree.parent(selected_item), index - 1)
-
-    def move_down(self):
-        selected_item = self.tree.selection()
-        if selected_item:
-            index = self.tree.index(selected_item)
-            if index < len(self.tree.get_children()) - 1:
-                self.tree.move(selected_item, self.tree.parent(selected_item), index + 1)
-
-    def expand_all(self):
-        for item in self.tree.get_children():
-            self.tree.item(item, open=True)
-
-    def setup_key_listener(self):
-        keyboard.on_release(self.on_key_up_event)
-
-    def on_key_up_event(self, event):
-        key_atq_auxiliar = self.combo_box_tecla_atq_auxiliar.get()
-        keys_action = self.combo_box_tecla_macro.get()
-        ms = self.input_macro_ms.get()
-        
-        hotkey_tg_lider = self.combo_box_hotkey_tg.get()
-        hotkey_combar = self.combo_box_hotkey_combar.get()
-        
-        if event.name == hotkey_tg_lider:
-            print(f"Tecla {hotkey_tg_lider} solta")
-            if (self.button_confirm_atq_auxiliar.cget('state') == 'normal') or \
-           (self.button_confirm_hotkey_combar.cget('state') == 'normal') or \
-           (self.button_confirm_hotkey_tg.cget('state') == 'normal') or \
-           (self.button_confirm_macro.cget('state') == 'normal') or \
-           (self.button_confirm_macro_ms.cget('state') == 'normal'):
-
-
-                CTkMessagebox(title="Info", message="Confirme todos os campos.")
-                return
-            else:
-                dataTable = self.print_treeview_values()
-
-                try:
-                    with open('window_info.json', 'r') as file:
-                        data = json.load(file)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    print('Error')
-                
-                
-                for index, key in enumerate(dataTable):
-                    if index != 0:
-                        hwnd = data[key]['hwnd']
-                        ativar(hwnd)
-                        time.sleep(int(ms)/1000)
-                        enviar_tecla_shift_1(hwnd)
-                        enviar_tecla(hwnd,key_atq_auxiliar)  
-
-                time.sleep(int(ms)/1000)
-                lider = data[dataTable[0]]['hwnd']
-                ativar(lider)
-
-        if event.name == hotkey_combar:
-            print(f"Tecla {hotkey_combar} solta")
-            if (self.button_confirm_atq_auxiliar.cget('state') == 'normal') or \
-           (self.button_confirm_hotkey_combar.cget('state') == 'normal') or \
-           (self.button_confirm_hotkey_tg.cget('state') == 'normal') or \
-           (self.button_confirm_macro.cget('state') == 'normal') or \
-           (self.button_confirm_macro_ms.cget('state') == 'normal'):
-            
-                CTkMessagebox(title="Info", message="Confirme todos os campos.")
-                return
-            else:
-                if keys_action == "F1 ao F8":
-                    key_list = [f"F{i}" for i in range(1, 9)]
-                    dataTable = self.print_treeview_values()
-
-                    try:
-                        with open('window_info.json', 'r') as file:
-                            data = json.load(file)
-                    except (FileNotFoundError, json.JSONDecodeError):
-                        print('Error')
-                              
-                    for tecla in key_list:
-                        for index, key in enumerate(dataTable):
-                            print(tecla)
-                            hwnd = data[key]['hwnd']
-                            ativar(hwnd)
-                            time.sleep(int(ms)/1000)
-                            enviar_tecla(hwnd,tecla)
-
-                if keys_action == "1 ao 9":
-                    key_list = [f"{i}" for i in range(1, 10)]
-                    dataTable = self.print_treeview_values()
-
-                    try:
-                        with open('window_info.json', 'r') as file:
-                            data = json.load(file)
-                    except (FileNotFoundError, json.JSONDecodeError):
-                        print('Error')
-                              
-                    for tecla in key_list:
-                        for index, key in enumerate(dataTable):
-                            print(tecla)
-                            hwnd = data[key]['hwnd']
-                            ativar(hwnd)
-                            time.sleep(int(ms)/1000)
-                            enviar_tecla(hwnd,tecla)
-
-    def print_treeview_values(self):
-        data = self.get_treeview_data()
-        return data
+        # Salva os dados no arquivo JSON
+        try:
+            with open('binds.json', 'w') as json_file:
+                json.dump(settings_data, json_file, indent=4)
+            print("Configurações salvas com sucesso.")
+        except IOError:
+            print("Erro ao salvar as configurações.")
