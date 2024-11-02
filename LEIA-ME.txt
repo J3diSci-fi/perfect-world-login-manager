@@ -2,3 +2,8 @@ Sobre o COMBO
 
 - A primeira ação do combo = Quando ativa a janela pela primeira vez, ele pressiona "TAB" para pegar o TG mais próximo
 portanto veja a caixa de TG monstro.
+
+OUTROS
+
+- Para evitar qualquer tipo de Erro, caso tenha espaços no nome da pasta do PW, tire o espaço
+Exemplo: PW Xoblas o nome da pasta deve ficar PWXoblas

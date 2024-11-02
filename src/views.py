@@ -15,6 +15,8 @@ import time
 import keyboard
 from src.focus import ativar
 from src.actions import enviar_tecla_shift_1, enviar_tecla
+import pygame
+import random
 
 browse_image = ctk.CTkImage(Image.open("./res/search.png"), size=(20, 20))
 visible_on = ctk.CTkImage(Image.open("./res/visibility_icon.png"), size=(20, 20))
@@ -30,7 +32,7 @@ back = ctk.CTkImage(Image.open("./res/back.png"),size=(20,20))
 maximizar = ctk.CTkImage(Image.open("./res/maximizar.png"),size=(24,24))
 
 emoji1 = ctk.CTkImage(Image.open("./res/emoji1.png"),size=(96,96))
-racas_humanos = ctk.CTkImage(Image.open("./res/racas_humanos.png"),size=(160,160))
+racas_humanos = ctk.CTkImage(Image.open("./res/racas_humanos.png"),size=(120,120))
 
 class Root(ctk.CTk):
 
@@ -112,6 +114,7 @@ class Manager(ctk.CTkToplevel):
 
     def __init__(self, master):
         super().__init__(master)
+        pygame.mixer.init()
         self.master = master
 
         self.__windowcfg()
@@ -182,7 +185,6 @@ class Manager(ctk.CTkToplevel):
         frame = ctk.CTkFrame(self)
         frame.place(x=10, y=40)
         
-
         login_label = ctk.CTkLabel(frame, text="Login:")
         login_label.grid(row=0, column=0, padx=10, pady=10)
 
@@ -248,6 +250,19 @@ class Manager(ctk.CTkToplevel):
         
         self.close_all = ctk.CTkButton(frame, text= "Fechar todos os PW's",width=307,command=self.__close_pws)
         self.close_all.grid(row=1,column=0,padx=10,pady=10)
+
+        self.trolei = ctk.CTkButton(frame, text= "Não clique aqui !!!",width=307,command=self.__play_sound)
+        self.trolei.grid(row=2,column=0,padx=10,pady=10)
+
+    def __play_sound(self):
+        # Lista todos os arquivos MP3 na pasta 'res'
+        mp3_files = [file for file in os.listdir('./res') if file.endswith('.mp3')]
+        
+        # Escolhe um arquivo MP3 aleatoriamente
+        if mp3_files:
+            random_mp3 = random.choice(mp3_files)
+            pygame.mixer.music.load(f'./res/{random_mp3}')
+            pygame.mixer.music.play()
 
     def __frameImage(self):
 
@@ -594,9 +609,11 @@ class ComboRoot(ctk.CTkToplevel):
         super().__init__(master)
         self.master = master
         self.__windowcfg()
-        self.__buttons()
         self.__treeview()
         self.__treeview2()
+        self.__buttons()
+        self.__frameIntervalo1()
+        self.__frameIntervalo2()
         
         self.previous_state = []
         
@@ -611,12 +628,12 @@ class ComboRoot(ctk.CTkToplevel):
         self.withdraw()
 
     def __windowcfg(self):
-        self.title("Combo")
+        self.title("Combar")
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.close_all)
 
         self.window_width = 702
-        self.window_height = 500
+        self.window_height = 530
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - self.window_width) // 2
@@ -627,21 +644,19 @@ class ComboRoot(ctk.CTkToplevel):
         self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
     
     def __buttons(self):
-        label_img = ctk.CTkLabel(self,text='',image=racas_humanos)
-        label_img.place(x=265,y=10)
 
         # Adicionando os novos botões
         self.btn_left = ctk.CTkButton(self,width=50,image=seta_esquerda, text="", command=self.__leftButton)
-        self.btn_left.place(x=325, y=180)  # Posição do botão à esquerda
+        self.btn_left.place(x=320, y=180)  # Posição do botão à esquerda
 
         self.btn_right = ctk.CTkButton(self,width=50,image=seta_direita, text="", command=self.__rightButton)
-        self.btn_right.place(x=325, y=150)  # Posição do botão à direita
+        self.btn_right.place(x=320, y=150)  # Posição do botão à direita
 
-        self.btn_up = ctk.CTkButton(self,width=50,image=seta_cima, text="", command=self.__upButton)
-        self.btn_up.place(x=500, y=350)  # Posição do botão à esquerda
+        self.btn_up = ctk.CTkButton(self.frame2,width=50,image=seta_cima, text="", command=self.__upButton)
+        self.btn_up.place(x=85, y=355)  # Posição do botão à esquerda
 
-        self.btn_down = ctk.CTkButton(self,width=50,image=seta_baixo, text="", command=self.__downButton)
-        self.btn_down.place(x=560, y=350)  # Posição do botão à direita
+        self.btn_down = ctk.CTkButton(self.frame2,width=50,image=seta_baixo, text="", command=self.__downButton)
+        self.btn_down.place(x=145, y=355)  # Posição do botão à direita
 
         self.btn_maximizer = ctk.CTkButton(self,width=10, image=maximizar, text='',command=self.__buttonOrder)
         self.btn_maximizer.place(x=self.window_width-50,y=self.window_height - 43)
@@ -650,40 +665,51 @@ class ComboRoot(ctk.CTkToplevel):
         self.btn_back.place(x=10,y=self.window_height - 43)
 
     def __treeview(self):
-        # Criação do Treeview para exibir contas com tema escuro
-        label = ctk.CTkLabel(self,text='CONTAS ABERTA(S)')
-        label.place(x=80,y=10)
+        label_img = ctk.CTkLabel(self,text='',image=racas_humanos)
+        label_img.place(x=285,y=15)
 
-        self.tree = ttk.Treeview(self, columns=("Nickname",), show="headings", style="Dark.Treeview")
+        # Frame para o primeiro Treeview
+        frame1 = ctk.CTkFrame(self, width=280, height=350)  # Defina o tamanho aqui
+        frame1.place(x=10, y=10)  # Ajuste conforme necessário
+
+        # Criação do Treeview para exibir contas com tema escuro
+        label = ctk.CTkLabel(frame1, text='CONTAS ABERTA(S)')
+        label.place(x=80, y=10)
+
+        self.tree = ttk.Treeview(frame1, columns=("Nickname",), show="headings", style="Dark.Treeview")
         self.tree.heading("Nickname", text="Nickname")
         
         # Centraliza os dados na coluna
         self.tree.column("Nickname", anchor="center")  # Centraliza a coluna "Nickname"
         
         # Adicionando um scrollbar
-        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
+        self.scrollbar = ttk.Scrollbar(frame1, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=self.scrollbar.set)
         
-        self.tree.place(x=10, y=40, width=250, height=300)
-        self.scrollbar.place(x=260, y=40, height=300)  # Posiciona o scrollbar ao lado da tree
+        self.tree.place(x=15, y=40, width=240, height=300)
+        self.scrollbar.place(x=250, y=40, height=300)  # Posiciona o scrollbar ao lado da tree
 
     def __treeview2(self):
-        # Criação do Treeview para exibir contas com tema escuro
-        label = ctk.CTkLabel(self, text='CONTAS NO COMBO')
-        label.place(x=495, y=10)  # Ajuste a posição conforme necessário
+        # Frame para o segundo Treeview
+        self.frame2 = ctk.CTkFrame(self, width=280, height=400)  # Defina o tamanho aqui
+        self.frame2.place(x=405, y=10)  # Ajuste conforme necessário
 
-        self.tree2 = ttk.Treeview(self, columns=("Nickname",), show="headings", style="Dark.Treeview")
+        # Criação do Treeview para exibir contas com tema escuro
+        label = ctk.CTkLabel(self.frame2, text='CONTAS NO COMBO')
+        label.place(x=80, y=10)
+
+        self.tree2 = ttk.Treeview(self.frame2, columns=("Nickname",), show="headings", style="Dark.Treeview")
         self.tree2.heading("Nickname", text="Nickname")
         
         # Centraliza os dados na coluna
         self.tree2.column("Nickname", anchor="center")  # Centraliza a coluna "Nickname"
         
         # Adicionando um scrollbar
-        self.scrollbar2 = ttk.Scrollbar(self, orient="vertical", command=self.tree2.yview)
+        self.scrollbar2 = ttk.Scrollbar(self.frame2, orient="vertical", command=self.tree2.yview)
         self.tree2.configure(yscrollcommand=self.scrollbar2.set)
         
-        self.tree2.place(x=425, y=40, width=250, height=300)  # Ajuste a posição e tamanho conforme necessário
-        self.scrollbar2.place(x=675, y=40, height=300)  # Posiciona o scrollbar ao lado da tree
+        self.tree2.place(x=15, y=40, width=240, height=300)
+        self.scrollbar2.place(x=250, y=40, height=300)  # Posiciona o scrollbar ao lado da tree
 
     def __upButton(self):
         selected_item = self.tree2.selection()  # Obtém o item selecionado na segunda Treeview
@@ -750,6 +776,56 @@ class ComboRoot(ctk.CTkToplevel):
         viewOrder(self,self.list_second_tree)
         self.withdraw()
 
+    def __validate_numeric_input(self,value_if_allowed):
+        if value_if_allowed.isdigit() or value_if_allowed == "":
+            return True
+        return False
+
+    def __frameIntervalo1(self):
+        vcmd = (self.register(self.__validate_numeric_input), '%P')
+        frame = ctk.CTkFrame(self, width=200, height=200)
+        frame.place(x=10, y=360)  # Ajuste a posição conforme necessário
+
+        label = ctk.CTkLabel(frame, text="Intervalo:")
+        label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.combobox_intervalo1 = ctk.CTkComboBox(frame, values=["F1 até F4", "1 ao 5"],width=90)
+        self.combobox_intervalo1.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+
+        self.entry_intervalo1 = ctk.CTkEntry(frame,validate="key",validatecommand=vcmd,width=130)
+        self.entry_intervalo1.insert(0, "1000")  # Define o valor inicial padrão
+        self.entry_intervalo1.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+
+        label_ms = ctk.CTkLabel(frame, text="(ms)")
+        label_ms.place(x=150,y=57)
+
+    def __frameIntervalo2(self):
+        vcmd = (self.register(self.__validate_numeric_input), '%P')
+        frame = ctk.CTkFrame(self, width=200, height=200)
+        frame.place(x=190, y=360)  # Ajuste a posição conforme necessário
+
+        label = ctk.CTkLabel(frame, text="Intervalo:")
+        label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.combobox_intervalo2 = ctk.CTkComboBox(frame, values=["F5 até F8", "5 ao 9"],width=90)
+        self.combobox_intervalo2.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+
+        self.entry_intervalo2 = ctk.CTkEntry(frame,validate="key",validatecommand=vcmd,width=130)
+        self.entry_intervalo2.insert(0, "1000")  # Define o valor inicial padrão
+        self.entry_intervalo2.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+
+        label_ms = ctk.CTkLabel(frame, text="(ms)")
+        label_ms.place(x=150,y=57)
+
+        separator = ttk.Separator(self, orient='vertical')
+        separator.place(x=192, y=365, height=85)  # Ajuste a posição e altura conforme necessário
+
+        frame = ctk.CTkFrame(self, width=200, height=200)
+        frame.place(x=85, y=460)  # Ajuste a posição conforme necessário
+
+        label = ctk.CTkLabel(frame, text="Por padrão é 1000ms\nRecomendo valores acima disso.\nDependendo do PC. 500ms > ")
+        label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
 class viewOrder(ctk.CTkToplevel):
     def __init__(self, master=None, list_second_tree = []):
         super().__init__(master)
@@ -808,11 +884,11 @@ class viewOrder(ctk.CTkToplevel):
 
     def __windowcfg(self):
         self.protocol("WM_DELETE_WINDOW",lambda: self.close_all())
-        self.title("Order Contas")
+        self.title("Combar")
         self.resizable(False, False)
         self.attributes('-topmost', True)
 
-        self.window_width = 200
+        self.window_width = 250
         self.window_height = 500
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
@@ -824,21 +900,42 @@ class viewOrder(ctk.CTkToplevel):
         self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
     
     def __treeview(self):
+        # Criação de um frame para o Treeview
+        frame = ctk.CTkFrame(self)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+
         # Criação do Treeview para exibir contas com tema escuro
-        self.tree = ttk.Treeview(self, columns=("Nickname",), show="headings", style="Dark.Treeview")
-        self.tree.heading("Nickname", text="Nickname")
+        self.tree = ttk.Treeview(frame, columns=("Nickname",), show="headings", style="Dark.Treeview")
+        self.tree.heading("Nickname", text="Nickname",anchor='center')
         
         # Centraliza os dados na coluna
         self.tree.column("Nickname", anchor="center")  # Centraliza a coluna "Nickname"
         
-        self.tree.pack(fill="both", expand=True)
+        self.tree.place(x=10, y=10, width=210, height=395)
+        
+        # Adiciona um bind para o evento de duplo clique
+        self.tree.bind("<Button-1>", self.on_click)
+
+    def on_click(self, event):
+        # Verifica se há um item selecionado
+        selected_items = self.tree.selection()
+        if selected_items:
+            item_id = selected_items[0]
+            nickname = self.tree.item(item_id, 'values')[0]
+            
+            # Procura o hwnd correspondente ao nickname e ativa a janela
+            for entry in current_state:
+                if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                    hwnd = entry[2]  # Supondo que entry[2] é o hwnd
+                    ativar(hwnd)
+                    break
 
     def __elements(self):
         # ... código existente ...
         
         # Criação de um frame para organizar os botões horizontalmente
         button_frame = ctk.CTkFrame(self)
-        button_frame.pack(fill="x", pady=10)
+        button_frame.pack(fill="x", padx=10,pady=10)
 
         # Botão para voltar
         back_button = ctk.CTkButton(button_frame, width=20, image=back, text="", command=self.__back_to_master)
@@ -878,12 +975,19 @@ class viewOrder(ctk.CTkToplevel):
             return self.tree.item(previous_item, 'values')[0]  # Retorna o nickname
 
     def on_key_up_event(self, event):
+        nickname = None
         if event.name.upper() == self.para_baixo:
             nickname = self.select_next_cell()
-            print(f"Próximo Nickname: {nickname}")  # Exemplo de uso
         elif event.name.upper() == self.para_cima:
             nickname = self.select_previous_cell()
-            print(f"Nickname Anterior: {nickname}")  # Exemplo de uso
+
+        # Verifica o current_state para encontrar o hwnd correspondente ao nickname
+        if nickname is not None:
+            for entry in current_state:
+                if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                    hwnd = entry[2]  # Supondo que entry[1] é o hwnd
+                    ativar(hwnd)
+                    break
 
 class BindRoot(ctk.CTkToplevel):
     def __init__(self, master=None):

@@ -11,8 +11,10 @@ executable_path.json
 main.cmd
 main.exe
 window_info.json
+binds.json
 
 # Ignorar a pasta __pycache__ dentro de src
 src/__pycache__/
 
 main.build/
+

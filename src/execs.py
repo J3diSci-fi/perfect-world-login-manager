@@ -63,7 +63,6 @@ def verify_log_execs(flag):
                         # Verifica se já existe uma entrada com o mesmo login e pid
                         if not any(entry[0] == login for entry in current_state):  # Verifica apenas o login
                             current_state.append([login, pid])  # Adiciona à current_state se não estiver presente
-                    print(cmdline)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 # Ignora processos que foram encerrados ou aos quais não temos acesso
                 continue
@@ -73,7 +72,6 @@ def verify_log_execs(flag):
             if entry[0] not in active_logins:  # Verifica apenas o login
                 current_state.remove(entry)  # Remove da current_state se não estiver mais ativo
 
-        print(current_state)
         time.sleep(5)
         find_hwnd_window()
 
