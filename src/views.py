@@ -782,6 +782,7 @@ class ComboRoot(ctk.CTkToplevel):
 
     def __buttonOrder(self):
         self.vieworder.deiconify()
+        self.vieworder.key_listener()
         self.withdraw()
 
     def __validate_numeric_input(self,value_if_allowed):
@@ -889,7 +890,7 @@ class viewOrder(ctk.CTkToplevel):
         # Carregar as teclas do arquivo JSON
         self.para_baixo, self.para_cima = self.load_bind_keys()
 
-        self.setup_key_listener()
+        self.key_listener()
         self.previous_state = []
 
         # Instancia o gerenciador de Treeview
@@ -897,6 +898,9 @@ class viewOrder(ctk.CTkToplevel):
         self.treeview_order.start()
 
         self.thread_flag_singleCombo = True
+    
+    def key_listener(self):
+        self.setup_key_listener()
 
     def load_bind_keys(self):
         try:
