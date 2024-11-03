@@ -38,6 +38,7 @@ racas_humanos = ctk.CTkImage(Image.open("./res/racas_humanos.png"),size=(120,120
 class Root(ctk.CTk):
 
     def __init__(self):
+        ctk.set_appearance_mode("light")
         super().__init__()
 
         self.__windowcfg()
