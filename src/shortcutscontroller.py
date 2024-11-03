@@ -44,6 +44,39 @@ def criar_atalho(login,senha,nickname,icon_path):
 
     return caminho_atalho
 
+def atualizar_atalhos():
+    # Lista para armazenar os dados dos atalhos existentes
+    atalhos_data = []
+
+    # Verifica se a pasta shortcuts existe
+    if os.path.exists(__shortcut_path):
+        for arquivo in os.listdir(__shortcut_path):
+            if arquivo.endswith(".lnk"):
+                caminho_arquivo = os.path.join(__shortcut_path, arquivo)
+
+                # Obtém informações do atalho
+                shell = win32com.client.Dispatch("WScript.Shell")
+                atalho = shell.CreateShortCut(caminho_arquivo)
+
+                # Extraindo informações do atalho
+                args = atalho.Arguments.split()
+                login = args[1].split(':')[1]  # Extrai login
+                senha = args[2].split(':')[1]  # Extrai senha
+                nickname = args[3].split(':')[1]  # Usa o nome do arquivo como nickname
+                icon_path = atalho.IconLocation
+
+                # Adiciona à lista
+                atalhos_data.append([login, senha, nickname, icon_path])
+
+        # Exclui todos os atalhos
+        excluir_todos_atalhos()
+
+    print(atalhos_data)
+
+    # Cria novos atalhos com os dados coletados e o novo caminho
+    for login, senha, nickname, icon_path in atalhos_data:
+        criar_atalho(login, senha, nickname, icon_path)
+
 def editar_atalho(nome_atalho, login,senha,nickname,icon_path):
     excluir_atalho(nome_atalho)
     criar_atalho(login,senha,nickname,icon_path)

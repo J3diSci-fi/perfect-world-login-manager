@@ -4,17 +4,17 @@ import customtkinter as ctk
 from CTkMenuBar import *
 from CTkTable import *
 from CTkMessagebox import *
-from tkinter import filedialog, messagebox, StringVar
+from tkinter import filedialog, messagebox
 from PIL import Image
 import json
 import os
-from src.shortcutscontroller import criar_atalho,editar_atalho,excluir_atalho,excluir_todos_atalhos
+from src.shortcutscontroller import criar_atalho,editar_atalho,excluir_atalho,excluir_todos_atalhos,atualizar_atalhos
 from src.execs import current_state,close_all_pws,start_shortcut,exec_launcher,state_elements,TreeviewManager
 import threading
 import time
 import keyboard
 from src.focus import ativar
-from src.actions import enviar_tecla_shift_1, enviar_tecla
+from src.actions import enviar_tecla
 import pygame
 import random
 
@@ -95,6 +95,7 @@ class Root(ctk.CTk):
             with open("executable_path.json", "w") as json_file:
                 json.dump(data, json_file, indent=4)
             
+            atualizar_atalhos()
             self.open_Manager()
         else:
             CTkMessagebox(title="Erro", message="Selecione o executável.", icon="cancel")
@@ -125,10 +126,11 @@ class Manager(ctk.CTkToplevel):
         self.__frameTable()
         self.__framebottom_table()
 
-        self.comboView = ComboRoot(self)
-        self.comboView.withdraw()
-
+        self.after(100, self.create_combo_view)  # Chama o método após 100ms
         state_elements()
+
+    def create_combo_view(self):
+        self.comboView = ComboRoot(self)  # Atribui a nova instância
 
     def close_all(self):
         self.destroy()
@@ -474,8 +476,6 @@ class EditLogin(ctk.CTkToplevel):
         self.grab_set()
         self.focus()
 
-        print(icon_path)
-
         self.__windowcfg()
         self.__frameAddAccount()
 
@@ -499,24 +499,24 @@ class EditLogin(ctk.CTkToplevel):
         self.after(200, lambda: self.iconbitmap('./res/icon.ico'))
 
     def __frameAddAccount(self):
+        self.login_var = StringVar(value=self.login)
+        self.password_var = StringVar(value=self.password)
+        self.nickname_var = StringVar(value=self.nickname)
+        
         frame = ctk.CTkFrame(self)
         frame.place(x=10, y=10)
-
-        login_var = StringVar(value=self.login)
-        password_var = StringVar(value=self.password)
-        nickname_var = StringVar(value=self.nickname)
 
         login_label = ctk.CTkLabel(frame, text="Login:")
         login_label.grid(row=0, column=0, padx=10, pady=10)
 
-        self.login_entry = ctk.CTkEntry(frame,textvariable=login_var)
+        self.login_entry = ctk.CTkEntry(frame,textvariable=self.login_var)
         self.login_entry.grid(row=0, column=1, columnspan=2, sticky="ew", padx=10, pady=10)
 
         password_label = ctk.CTkLabel(frame, text="Senha:")
         password_label.grid(row=1, column=0, padx=10, pady=10)
 
         self.password_visible = False
-        self.password_entry = ctk.CTkEntry(frame, show="*" ,textvariable=password_var)
+        self.password_entry = ctk.CTkEntry(frame, show="*",textvariable=self.password_var)
         self.password_entry.grid(row=1, column=1, padx=10, pady=10)
 
         self.toggle_button = ctk.CTkButton(frame, image=visible_on, text="", command=self.toggle_password_visibility, width=10)
@@ -525,7 +525,7 @@ class EditLogin(ctk.CTkToplevel):
         nickname_label = ctk.CTkLabel(frame, text="Nickname:")
         nickname_label.grid(row=2, column=0, padx=10, pady=10)
 
-        self.nickname_entry = ctk.CTkEntry(frame,textvariable=nickname_var)
+        self.nickname_entry = ctk.CTkEntry(frame,textvariable=self.nickname_var)
         self.nickname_entry.grid(row=2, column=1, columnspan=2, sticky="ew", padx=10, pady=10)
 
         icon_label = ctk.CTkLabel(frame, text="Ícone:")
@@ -608,6 +608,7 @@ class EditLogin(ctk.CTkToplevel):
 class ComboRoot(ctk.CTkToplevel):
     def __init__(self, master=None):
         super().__init__(master)
+        self.withdraw()
         self.master = master
         self.__windowcfg()
         self.__treeview()
@@ -814,7 +815,7 @@ class ComboRoot(ctk.CTkToplevel):
         label = ctk.CTkLabel(frame, text="Intervalo:")
         label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.combobox_intervalo2 = ctk.CTkComboBox(frame, values=["F5 até F8", "5 ao 9"],width=90,state='readonly')
+        self.combobox_intervalo2 = ctk.CTkComboBox(frame, values=["F5 até F8", "6 ao 9"],width=90,state='readonly')
         self.combobox_intervalo2.set("F5 até F8")
         self.combobox_intervalo2.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
@@ -835,7 +836,7 @@ class ComboRoot(ctk.CTkToplevel):
         image_label = ctk.CTkLabel(self, image=botao_de_informacao,text='')  # Substitua 'some_image_variable' pela sua variável de imagem
         image_label.place(x=50,y=472)
 
-        label = ctk.CTkLabel(frame, text="Por padrão é 1000ms\nRecomendo valores acima disso.\nDependendo do PC. 500ms > ")
+        label = ctk.CTkLabel(frame, text="Por padrão é 1000ms\nDependendo do PC. 100ms > \nSó testando para saber 🤣")
         label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
     def __teclaunica(self):
@@ -871,12 +872,12 @@ class ComboRoot(ctk.CTkToplevel):
         self.entry_intervalo2.configure(state="disabled" if self.activate_checkbox_loop.get() else "normal")
 
 class viewOrder(ctk.CTkToplevel):
-    def __init__(self, master=None, list_second_tree = [],combobox_interval1=None, time_interval1=None, combobox_intervalo2=None, time_interval2=None, checkbox_single=None, combobox_single=None):
+    def __init__(self, master=None, list_second_tree = [],combobox_interval1=None, time_interval1=None, combobox_interval2=None, time_interval2=None, checkbox_single=None, combobox_single=None):
         super().__init__(master)
         self.list_second_tree = list_second_tree
         self.combobox_interval1 = combobox_interval1
         self.time_interval1 = time_interval1
-        self.combobox_intervalo2 = combobox_intervalo2
+        self.combobox_interval2 = combobox_interval2
         self.time_interval2 = time_interval2
         self.checkbox_single = checkbox_single
         self.combobox_single = combobox_single
@@ -1047,6 +1048,68 @@ class viewOrder(ctk.CTkToplevel):
             time.sleep(1)  # Adiciona um delay antes de reiniciar o loop
 
         print("Loop encerrado.")
+
+    def __send_keys_to_accounts(self):
+        # Verifica se há itens na tabela antes de iniciar a ação
+        if not self.tree.get_children():
+            print('Vazio, não há contas para enviar teclas.')
+            return  # Sai da função se a tabela estiver vazia
+
+        items = self.tree.get_children()  # Captura todos os itens
+        item_count = len(items)
+
+        # Verifica se result_list está definida
+        if not hasattr(self, 'result_list') or not self.result_list:
+            print('result_list está vazia ou não definida.')
+            return
+
+        # Obtendo os delays definidos
+        delay_interval1 = self.time_interval1.get()  # Obtém o valor do delay do ComboBox
+        delay_interval2 = self.time_interval2.get()  # Obtém o valor do delay do ComboBox
+
+        # Dicionário para controlar se o TAB já foi enviado para cada nickname
+        tab_sent_status = {self.tree.item(item, 'values')[0]: False for item in items}
+
+        # Itera sobre as teclas na result_list
+        for key in self.result_list:
+            # Para cada tecla, envia para todos os itens
+            for index in range(item_count):
+                item = items[index]
+                nickname = self.tree.item(item, 'values')[0]
+
+                # Seleciona o item atual visivelmente na Treeview
+                self.tree.selection_set(item)
+                self.tree.see(item)  # Faz o item visível na árvore
+
+                for entry in current_state:
+                    if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                        hwnd = entry[2]  # Supondo que entry[2] é o hwnd
+                        ativar(hwnd)
+                        print(hwnd)
+                        time.sleep(0.001)  # Adiciona um delay para garantir que a janela esteja ativa
+
+                        # Envia o TAB se ainda não foi enviado para este nickname
+                        if not tab_sent_status[nickname]:
+                            enviar_tecla(hwnd, 'TAB')
+                            tab_sent_status[nickname] = True  # Atualiza o controle para que o TAB não seja enviado novamente para esse nickname
+                        
+                        # Envia a tecla atual para o item
+                        enviar_tecla(hwnd, key)  # Envia a tecla
+                        break  # Para evitar enviar para o mesmo item várias vezes
+
+                # Aqui você pode decidir qual delay aplicar entre as teclas
+                if delay_interval1.isdigit() and delay_interval2.isdigit():
+                    delay1 = int(delay_interval1) / 1000
+                    delay2 = int(delay_interval2) / 1000
+                    time.sleep(delay1 if key in ['F1', 'F2', 'F3', 'F4','1','2','3','4','5'] else delay2)
+                else:
+                    print('Os intervalos não são válidos. Usando delay padrão de 1 segundo.')
+                    time.sleep(1)  # Usar um delay padrão se os valores não forem válidos
+
+            # Aguarda um momento antes de passar para a próxima tecla
+            time.sleep(1)  # Tempo para visualizar a seleção
+
+        print("Envio de teclas encerrado.")
         
     def __combar_action(self):
         if self.checkbox_single.get() == 1:
@@ -1055,8 +1118,34 @@ class viewOrder(ctk.CTkToplevel):
             thread.daemon = True
             thread.start()
         else:
-            # Lógica para quando single não é igual a 1
-            pass
+            # Obtendo os valores dos ComboBox
+            interval1 = self.combobox_interval1.get()
+            interval2 = self.combobox_interval2.get()
+
+            result_list = []  # Lista para armazenar os valores
+            
+            # Lógica para o interval1
+            if interval1 == "F1 até F4":
+                result_list.extend(['F1', 'F2', 'F3', 'F4'])
+            elif interval1 == "1 ao 5":
+                result_list.extend(['1', '2', '3', '4', '5'])
+            
+            # Lógica para o interval2
+            if interval2 == "F5 até F8":
+                result_list.extend(['F5', 'F6', 'F7', 'F8'])
+            elif interval2 == "6 ao 9":
+                result_list.extend(['6', '7', '8', '9'])
+            
+            # Armazenando a result_list como um atributo da classe
+            self.result_list = result_list
+            
+            # Imprimindo a lista para testar
+            print(self.result_list)
+
+            # Criando uma thread para enviar as teclas
+            thread = threading.Thread(target=self.__send_keys_to_accounts)
+            thread.daemon = True  # Torna a thread um daemon
+            thread.start()  # Inicia a thread
 
     def setup_key_listener(self):
         keyboard.on_release(self.on_key_up_event)

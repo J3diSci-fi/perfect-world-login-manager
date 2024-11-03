@@ -1,6 +1,7 @@
 .gitignore
 
 env/
+dist/
 
 # Ignorar a pasta shortcuts
 shortcuts/
@@ -17,4 +18,3 @@ binds.json
 src/__pycache__/
 
 main.build/
-
