@@ -30,6 +30,7 @@ confirm = ctk.CTkImage(Image.open("./res/confirm.png"),size=(16,16))
 cancel = ctk.CTkImage(Image.open("./res/cancel.png"),size=(16,16))
 back = ctk.CTkImage(Image.open("./res/back.png"),size=(20,20))
 maximizar = ctk.CTkImage(Image.open("./res/maximizar.png"),size=(24,24))
+botao_de_informacao = ctk.CTkImage(Image.open("./res/botao-de-informacao.png"),size=(48,48))
 
 emoji1 = ctk.CTkImage(Image.open("./res/emoji1.png"),size=(96,96))
 racas_humanos = ctk.CTkImage(Image.open("./res/racas_humanos.png"),size=(120,120))
@@ -614,6 +615,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.__buttons()
         self.__frameIntervalo1()
         self.__frameIntervalo2()
+        self.__teclaunica()
         
         self.previous_state = []
         
@@ -622,6 +624,10 @@ class ComboRoot(ctk.CTkToplevel):
         # Instancia o gerenciador de Treeview
         self.treeview_manager = TreeviewManager(self)
         self.treeview_manager.start()
+
+        self.vieworder = viewOrder(self,self.list_second_tree,self.combobox_intervalo1,self.entry_intervalo1,self.combobox_intervalo2,
+                  self.entry_intervalo2,self.activate_checkbox_loop,self.tecla_combobox_loop)
+        self.vieworder.withdraw()
 
     def close_all(self):
         self.master.deiconify()
@@ -633,7 +639,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self.close_all)
 
         self.window_width = 702
-        self.window_height = 530
+        self.window_height = 560
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - self.window_width) // 2
@@ -662,7 +668,7 @@ class ComboRoot(ctk.CTkToplevel):
         self.btn_maximizer.place(x=self.window_width-50,y=self.window_height - 43)
 
         self.btn_back = ctk.CTkButton(self,width=10, image=back, text='',command=self.close_all)
-        self.btn_back.place(x=10,y=self.window_height - 43)
+        self.btn_back.place(x=10,y=self.window_height - 38)
 
     def __treeview(self):
         label_img = ctk.CTkLabel(self,text='',image=racas_humanos)
@@ -773,7 +779,7 @@ class ComboRoot(ctk.CTkToplevel):
             self.previous_state = current_nicknames
 
     def __buttonOrder(self):
-        viewOrder(self,self.list_second_tree)
+        self.vieworder.deiconify()
         self.withdraw()
 
     def __validate_numeric_input(self,value_if_allowed):
@@ -784,12 +790,13 @@ class ComboRoot(ctk.CTkToplevel):
     def __frameIntervalo1(self):
         vcmd = (self.register(self.__validate_numeric_input), '%P')
         frame = ctk.CTkFrame(self, width=200, height=200)
-        frame.place(x=10, y=360)  # Ajuste a posição conforme necessário
+        frame.place(x=10, y=365)  # Ajuste a posição conforme necessário
 
         label = ctk.CTkLabel(frame, text="Intervalo:")
         label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.combobox_intervalo1 = ctk.CTkComboBox(frame, values=["F1 até F4", "1 ao 5"],width=90)
+        self.combobox_intervalo1 = ctk.CTkComboBox(frame, values=["F1 até F4", "1 ao 5"],width=90,state='readonly')
+        self.combobox_intervalo1.set("F1 até F4")
         self.combobox_intervalo1.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         self.entry_intervalo1 = ctk.CTkEntry(frame,validate="key",validatecommand=vcmd,width=130)
@@ -802,12 +809,13 @@ class ComboRoot(ctk.CTkToplevel):
     def __frameIntervalo2(self):
         vcmd = (self.register(self.__validate_numeric_input), '%P')
         frame = ctk.CTkFrame(self, width=200, height=200)
-        frame.place(x=190, y=360)  # Ajuste a posição conforme necessário
+        frame.place(x=190, y=365)  # Ajuste a posição conforme necessário
 
         label = ctk.CTkLabel(frame, text="Intervalo:")
         label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.combobox_intervalo2 = ctk.CTkComboBox(frame, values=["F5 até F8", "5 ao 9"],width=90)
+        self.combobox_intervalo2 = ctk.CTkComboBox(frame, values=["F5 até F8", "5 ao 9"],width=90,state='readonly')
+        self.combobox_intervalo2.set("F5 até F8")
         self.combobox_intervalo2.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         self.entry_intervalo2 = ctk.CTkEntry(frame,validate="key",validatecommand=vcmd,width=130)
@@ -818,18 +826,60 @@ class ComboRoot(ctk.CTkToplevel):
         label_ms.place(x=150,y=57)
 
         separator = ttk.Separator(self, orient='vertical')
-        separator.place(x=192, y=365, height=85)  # Ajuste a posição e altura conforme necessário
+        separator.place(x=192, y=370, height=85)  # Ajuste a posição e altura conforme necessário
 
         frame = ctk.CTkFrame(self, width=200, height=200)
-        frame.place(x=85, y=460)  # Ajuste a posição conforme necessário
+        frame.place(x=100, y=465)  # Ajuste a posição conforme necessário
+
+        # Adiciona um label para imagem ao lado esquerdo
+        image_label = ctk.CTkLabel(self, image=botao_de_informacao,text='')  # Substitua 'some_image_variable' pela sua variável de imagem
+        image_label.place(x=50,y=472)
 
         label = ctk.CTkLabel(frame, text="Por padrão é 1000ms\nRecomendo valores acima disso.\nDependendo do PC. 500ms > ")
         label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
+    def __teclaunica(self):
+        frame = ctk.CTkFrame(self, width=200, height=100)
+        frame.place(x=405, y=415)  # Ajuste a posição conforme necessário
+
+        # Checkbox para ativar
+        self.activate_checkbox_loop = ctk.CTkCheckBox(frame, text="Ativar Loop",width=19,command=self.toggle_intervals)
+        self.activate_checkbox_loop.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+
+        # Label para "Tecla:"
+        tecla_label = ctk.CTkLabel(frame, text="Tecla:")
+        tecla_label.grid(row=1, column=0, padx=10, pady=10, sticky="we")
+
+        # Combobox para seleção de teclas
+        self.tecla_combobox_loop = ctk.CTkComboBox(frame, width=60, values=["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "1", "2", "3", "4", "5", "6", "7", "8", "9"],state='disabled')
+        self.tecla_combobox_loop.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+
+        # Label para "Tecla:"
+        tecla_label = ctk.CTkLabel(frame, text="Quando ativado repete\napenas essa tecla\nem todas as contas.")
+        tecla_label.grid(row=0, column=2, rowspan=2, sticky="we",padx=9)
+  
+    def toggle_intervals(self):
+        # Configurar o estado do tecla_combobox_loop
+        state = "readonly" if self.activate_checkbox_loop.get() else "disabled"
+        self.tecla_combobox_loop.configure(state=state)
+        
+        # Desativar ou ativar elementos do frameIntervalo1
+        self.combobox_intervalo1.configure(state="disabled" if self.activate_checkbox_loop.get() else "normal")
+        self.entry_intervalo1.configure(state="disabled" if self.activate_checkbox_loop.get() else "normal")
+        # Desativar ou ativar elementos do frameIntervalo2
+        self.combobox_intervalo2.configure(state="disabled" if self.activate_checkbox_loop.get() else "normal")
+        self.entry_intervalo2.configure(state="disabled" if self.activate_checkbox_loop.get() else "normal")
+
 class viewOrder(ctk.CTkToplevel):
-    def __init__(self, master=None, list_second_tree = []):
+    def __init__(self, master=None, list_second_tree = [],combobox_interval1=None, time_interval1=None, combobox_intervalo2=None, time_interval2=None, checkbox_single=None, combobox_single=None):
         super().__init__(master)
         self.list_second_tree = list_second_tree
+        self.combobox_interval1 = combobox_interval1
+        self.time_interval1 = time_interval1
+        self.combobox_intervalo2 = combobox_intervalo2
+        self.time_interval2 = time_interval2
+        self.checkbox_single = checkbox_single
+        self.combobox_single = combobox_single
         self.__windowcfg()
         self.__treeview()
         self.__elements()
@@ -841,8 +891,10 @@ class viewOrder(ctk.CTkToplevel):
         self.previous_state = []
 
         # Instancia o gerenciador de Treeview
-        self.treeview_manager = TreeviewManager(self)
-        self.treeview_manager.start()
+        self.treeview_order = TreeviewManager(self)
+        self.treeview_order.start()
+
+        self.thread_flag_singleCombo = True
 
     def load_bind_keys(self):
         try:
@@ -857,30 +909,31 @@ class viewOrder(ctk.CTkToplevel):
         return para_baixo, para_cima
 
     def atualizar_treeview(self):
-        # Obtém o estado atual das contas
-        current_nicknames = self.list_second_tree  # Usa list_second_tree em vez de current_state
+        # Verifica se o estado atual de list_second_tree é diferente do estado anterior
+        if self.list_second_tree != self.previous_state:
 
-        # Verifica se o estado atual é diferente do estado anterior
-        if current_nicknames != self.previous_state:
             # Limpa o Treeview antes de atualizar
             self.tree.delete(*self.tree.get_children())
             
             # Adiciona os logins ativos de list_second_tree ao Treeview
-            for nickname in current_nicknames:
+            for nickname in self.list_second_tree:
                 self.tree.insert("", "end", values=(nickname,))  # Insere o nickname no Treeview
-            
-            # Seleciona a primeira célula
-            if current_nicknames:
+
+            # Seleciona a primeira célula, se houver elementos
+            if self.list_second_tree:
                 first_item = self.tree.get_children()[0]
                 self.tree.selection_set(first_item)
-            
-            # Atualiza o estado anterior
-            self.previous_state = current_nicknames
+
+            # Atualiza o estado anterior com uma cópia de list_second_tree
+            self.previous_state = self.list_second_tree.copy()
+        else:
+            pass
 
     def close_all(self):
-        self.treeview_manager.stop()
+        self.thread_flag_singleCombo = False
+        keyboard.unhook_all()
         self.master.deiconify()
-        self.destroy()  # Fecha a janela principal (Root)
+        self.withdraw()
 
     def __windowcfg(self):
         self.protocol("WM_DELETE_WINDOW",lambda: self.close_all())
@@ -917,18 +970,23 @@ class viewOrder(ctk.CTkToplevel):
         self.tree.bind("<Button-1>", self.on_click)
 
     def on_click(self, event):
-        # Verifica se há um item selecionado
-        selected_items = self.tree.selection()
-        if selected_items:
-            item_id = selected_items[0]
-            nickname = self.tree.item(item_id, 'values')[0]
-            
-            # Procura o hwnd correspondente ao nickname e ativa a janela
-            for entry in current_state:
-                if entry[0] == nickname:  # Supondo que entry[0] é o nickname
-                    hwnd = entry[2]  # Supondo que entry[2] é o hwnd
-                    ativar(hwnd)
-                    break
+        # Obtém a posição do clique
+        region = self.tree.identify_region(event.x, event.y)
+
+        # Verifica se o clique foi em uma linha (item) válida
+        if region == "cell":  # Verifica se o clique foi em uma célula
+            item_id = self.tree.identify_row(event.y)
+            if item_id:
+                nickname = self.tree.item(item_id, 'values')[0]
+
+                # Procura o hwnd correspondente ao nickname e ativa a janela
+                for entry in current_state:
+                    if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                        hwnd = entry[2]  # Supondo que entry[2] é o hwnd
+                        ativar(hwnd)
+                        break
+        else:
+            print("Clique em uma área não válida.")  # Mensagem opcional para debug
 
     def __elements(self):
         # ... código existente ...
@@ -938,20 +996,67 @@ class viewOrder(ctk.CTkToplevel):
         button_frame.pack(fill="x", padx=10,pady=10)
 
         # Botão para voltar
-        back_button = ctk.CTkButton(button_frame, width=20, image=back, text="", command=self.__back_to_master)
+        back_button = ctk.CTkButton(button_frame, width=20, image=back, text="", command=lambda: self.close_all())
         back_button.pack(side="left", padx=10,pady=10)
 
         # Botão para combar
         combar_button = ctk.CTkButton(button_frame, text="Combar", command=self.__combar_action)
         combar_button.pack(side="right", padx=10,pady=10)
 
-    def __back_to_master(self):
-        self.master.deiconify()  # Mostra a janela principal
-        keyboard.unhook_all()
-        self.withdraw()  # Esconde a janela 
+    def __loopSingleCombo(self):
+        # Verifica se há itens na tabela antes de iniciar o loop
+        if not self.tree.get_children():
+            self.thread_flag_singleCombo = False
+            print('Vazio')
+            return  # Sai da função se a tabela estiver vazia
+
+        items = self.tree.get_children()  # Captura todos os itens
+        item_count = len(items)
+
+        # Variável para controlar se o TAB já foi enviado
+        tab_sent = False
+
+        while self.thread_flag_singleCombo:
+            for index in range(item_count):
+                item = items[index]
+                nickname = self.tree.item(item, 'values')[0]
+
+                # Seleciona o item atual visivelmente na Treeview
+                self.tree.selection_set(item)
+                self.tree.see(item)  # Faz o item visível na árvore
+                
+                for entry in current_state:
+                    if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                        hwnd = entry[2]  # Supondo que entry[2] é o hwnd
+                        ativar(hwnd)
+                        print(hwnd)
+                        time.sleep(0.001)  # Adiciona um delay de 1 segundo
+                        tecla = self.combobox_single.get()  # Obtém a tecla selecionada
+                        # Envia a tecla 'TAB' apenas na primeira iteração
+                        if not tab_sent:
+                            enviar_tecla(hwnd, 'TAB')
+                            tab_sent = True  # Atualiza o controle para que o TAB não seja enviado novamente
+                        enviar_tecla(hwnd, tecla)  # Envia a tecla
+                        break
+                
+                # Aguarda um momento para que o usuário veja a seleção antes de passar para a próxima
+                time.sleep(1)  # Tempo para visualizar a seleção
+
+            # Reinicia o índice quando chegar ao final
+            print("Reiniciando o loop.")
+            time.sleep(1)  # Adiciona um delay antes de reiniciar o loop
+
+        print("Loop encerrado.")
         
     def __combar_action(self):
-        CTkMessagebox(title="Aviso", message="Em Construção", icon="info")
+        if self.checkbox_single.get() == 1:
+            self.thread_flag_singleCombo = True
+            thread = threading.Thread(target=self.__loopSingleCombo)
+            thread.daemon = True
+            thread.start()
+        else:
+            # Lógica para quando single não é igual a 1
+            pass
 
     def setup_key_listener(self):
         keyboard.on_release(self.on_key_up_event)
