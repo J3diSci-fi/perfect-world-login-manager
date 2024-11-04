@@ -907,8 +907,9 @@ class viewOrder(ctk.CTkToplevel):
         try:
             with open('binds.json', 'r') as json_file:
                 settings_data = json.load(json_file)
-                para_baixo = settings_data.get("para_baixo", "'")
-                para_cima = settings_data.get("para_cima", "+")
+                para_baixo = settings_data.get("para_baixo")
+                para_cima = settings_data.get("para_cima")
+                print(para_baixo,para_cima)
         except (FileNotFoundError, json.JSONDecodeError):
             para_baixo = "'"
             para_cima = None
