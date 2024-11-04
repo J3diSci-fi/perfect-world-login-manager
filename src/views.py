@@ -1175,29 +1175,30 @@ class viewOrder(ctk.CTkToplevel):
             return self.tree.item(previous_item, 'values')[0]  # Retorna o nickname
 
     def on_key_up_event(self, event):
-        if not self.key_pressed:  # Verifica se a tecla não foi processada ainda
-            self.key_pressed = True  # Marca que a tecla foi processada
+        if self.key_pressed:
+            return  # Se a tecla já foi processada, ignora
 
-            nickname = None
-            if event.name.upper() == self.para_baixo:
-                nickname = self.select_next_cell()
-            elif event.name.upper() == self.para_cima:
-                nickname = self.select_previous_cell()
+        self.key_pressed = True  # Define a flag como verdadeira ao liberar a tecla
 
-            # Verifica o current_state para encontrar o hwnd correspondente ao nickname
-            if nickname is not None:
-                for entry in current_state:
-                    if entry[0] == nickname:  # Supondo que entry[0] é o nickname
-                        hwnd = entry[2]  # Supondo que entry[1] é o hwnd
-                        ativar(hwnd)
-                        break
+        nickname = None
+        if event.name.upper() == self.para_baixo:
+            nickname = self.select_next_cell()
+        elif event.name.upper() == self.para_cima:
+            nickname = self.select_previous_cell()
 
-        # Após o evento ser tratado, você pode redefinir a flag de tecla pressionada
-        # se necessário, dependendo da lógica que você deseja. Por exemplo:
-        keyboard.on_press(lambda e: self.reset_key_state(), suppress=True)  # Reseta quando a tecla é pressionada
+        # Verifica o current_state para encontrar o hwnd correspondente ao nickname
+        if nickname is not None:
+            for entry in current_state:
+                if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                    hwnd = entry[2]  # Supondo que entry[1] é o hwnd
+                    ativar(hwnd)
+                    break
 
-    def reset_key_state(self):
-        self.key_pressed = False  # Reseta a flag ao pressionar uma nova tecla
+        # Inicia um temporizador para resetar a flag após um pequeno atraso
+        threading.Timer(0.1, self.reset_key_pressed).start()  # Ajuste o tempo conforme necessário
+
+    def reset_key_pressed(self):
+        self.key_pressed = False  # Reseta a flag para permitir nova execução na próxima liberação
 
 class BindRoot(ctk.CTkToplevel):
     def __init__(self, master=None):
