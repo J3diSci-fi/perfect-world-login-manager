@@ -898,6 +898,8 @@ class viewOrder(ctk.CTkToplevel):
         self.treeview_order.start()
 
         self.thread_flag_singleCombo = True
+        self.last_key_processed = None
+        self.last_key_time = 0
     
     def key_listener(self):
         self.setup_key_listener()
@@ -1174,6 +1176,16 @@ class viewOrder(ctk.CTkToplevel):
             return self.tree.item(previous_item, 'values')[0]  # Retorna o nickname
 
     def on_key_up_event(self, event):
+        current_time = time.time()
+        
+        # Evita a repetição muito rápida da mesma tecla
+        if event.name == self.last_key_processed and (current_time - self.last_key_time) < 0.1:  # 100 ms
+            return
+
+        # Atualiza a última tecla e o tempo
+        self.last_key_processed = event.name
+        self.last_key_time = current_time
+
         nickname = None
         if event.name.upper() == self.para_baixo:
             nickname = self.select_next_cell()
