@@ -898,8 +898,7 @@ class viewOrder(ctk.CTkToplevel):
         self.treeview_order.start()
 
         self.thread_flag_singleCombo = True
-        self.last_key_processed = None
-        self.last_key_time = 0
+        self.key_pressed = False
     
     def key_listener(self):
         self.setup_key_listener()
@@ -1176,29 +1175,29 @@ class viewOrder(ctk.CTkToplevel):
             return self.tree.item(previous_item, 'values')[0]  # Retorna o nickname
 
     def on_key_up_event(self, event):
-        current_time = time.time()
-        
-        # Evita a repetição muito rápida da mesma tecla
-        if event.name == self.last_key_processed and (current_time - self.last_key_time) < 0.1:  # 100 ms
-            return
+        if not self.key_pressed:  # Verifica se a tecla não foi processada ainda
+            self.key_pressed = True  # Marca que a tecla foi processada
 
-        # Atualiza a última tecla e o tempo
-        self.last_key_processed = event.name
-        self.last_key_time = current_time
+            nickname = None
+            if event.name.upper() == self.para_baixo:
+                nickname = self.select_next_cell()
+            elif event.name.upper() == self.para_cima:
+                nickname = self.select_previous_cell()
 
-        nickname = None
-        if event.name.upper() == self.para_baixo:
-            nickname = self.select_next_cell()
-        elif event.name.upper() == self.para_cima:
-            nickname = self.select_previous_cell()
+            # Verifica o current_state para encontrar o hwnd correspondente ao nickname
+            if nickname is not None:
+                for entry in current_state:
+                    if entry[0] == nickname:  # Supondo que entry[0] é o nickname
+                        hwnd = entry[2]  # Supondo que entry[1] é o hwnd
+                        ativar(hwnd)
+                        break
 
-        # Verifica o current_state para encontrar o hwnd correspondente ao nickname
-        if nickname is not None:
-            for entry in current_state:
-                if entry[0] == nickname:  # Supondo que entry[0] é o nickname
-                    hwnd = entry[2]  # Supondo que entry[1] é o hwnd
-                    ativar(hwnd)
-                    break
+        # Após o evento ser tratado, você pode redefinir a flag de tecla pressionada
+        # se necessário, dependendo da lógica que você deseja. Por exemplo:
+        keyboard.on_press(lambda e: self.reset_key_state(), suppress=True)  # Reseta quando a tecla é pressionada
+
+    def reset_key_state(self):
+        self.key_pressed = False  # Reseta a flag ao pressionar uma nova tecla
 
 class BindRoot(ctk.CTkToplevel):
     def __init__(self, master=None):
